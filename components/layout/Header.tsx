@@ -1,7 +1,8 @@
 'use client';
 
+import Image from 'next/image';
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import {
   LayoutDashboard,
   Calendar,
@@ -12,34 +13,97 @@ import {
   LogOut,
   Menu,
   X,
-  Sparkles,
   UserRound,
-  Flame,
+  ChevronRight,
 } from 'lucide-react';
-import { SigmaLogo } from '@/components/ui/SigmaLogo';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { cn } from '@/lib/utils';
 import { createClient } from '@/lib/supabase/client';
-import { useRouter } from 'next/navigation';
+import { Button } from '@/components/ui/Button';
 
 interface HeaderProps {
-  user: { id: string; email?: string } | null;
-  profile: { full_name: string; role: string } | null;
+  user?: { id: string; email?: string } | null;
+  profile?: { full_name: string; role: string } | null;
 }
 
-export function Header({ user, profile }: HeaderProps) {
+export function Header({ user: propUser, profile: propProfile }: HeaderProps) {
   const pathname = usePathname();
   const router = useRouter();
   const [mobileOpen, setMobileOpen] = useState(false);
   const supabase = createClient();
 
+  const [authUser, setAuthUser] = useState<{ id: string; email?: string } | null>(propUser ?? null);
+  const [authProfile, setAuthProfile] = useState<{ full_name: string; role: string } | null>(propProfile ?? null);
+  const [signingOut, setSigningOut] = useState(false);
+
+  useEffect(() => {
+    setAuthUser(propUser ?? null);
+    setAuthProfile(propProfile ?? null);
+  }, [propUser, propProfile]);
+
+  useEffect(() => {
+    let mounted = true;
+
+    const fetchProfile = async (userId: string) => {
+      try {
+        const { data } = await supabase
+          .from('profiles')
+          .select('full_name, role')
+          .eq('id', userId)
+          .maybeSingle();
+        if (mounted) setAuthProfile(data);
+      } catch {
+        if (mounted) setAuthProfile(null);
+      }
+    };
+
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange(async (event, session) => {
+      if (!mounted) return;
+      const nextUser = session?.user ? { id: session.user.id, email: session.user.email ?? undefined } : null;
+      setAuthUser(nextUser);
+      if (!nextUser) {
+        setAuthProfile(null);
+      } else {
+        if (propProfile && propProfile.full_name) {
+          setAuthProfile(propProfile);
+        } else {
+          await fetchProfile(nextUser.id);
+        }
+      }
+    });
+
+    if (!propUser) {
+      supabase.auth.getUser().then(async ({ data: { user } }) => {
+        if (!mounted) return;
+        if (user) {
+          const resolved = { id: user.id, email: user.email ?? undefined };
+          setAuthUser(resolved);
+          await fetchProfile(user.id);
+        }
+      });
+    }
+
+    return () => {
+      mounted = false;
+      subscription.unsubscribe();
+    };
+  }, [supabase, propUser, propProfile]);
+
   const handleSignOut = async () => {
-    await supabase.auth.signOut();
-    router.refresh();
-    router.push('/');
+    setSigningOut(true);
+    try {
+      await supabase.auth.signOut();
+    } catch {
+    } finally {
+      router.push('/');
+      router.refresh();
+      setSigningOut(false);
+    }
   };
 
-  const isCoach = profile?.role === 'coach';
+  const isCoach = authProfile?.role === 'coach';
 
   const coachLinks = [
     { href: '/dashboard/coach', label: 'Panel', icon: LayoutDashboard },
@@ -57,24 +121,23 @@ export function Header({ user, profile }: HeaderProps) {
 
   const links = isCoach ? coachLinks : studentLinks;
 
-  if (!user) {
+  if (!authUser) {
     return (
       <header className="sticky top-0 z-50 border-b border-slate-200/80 bg-white/90 backdrop-blur-md">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
           <Link href="/" className="flex items-center gap-2 group">
-            <SigmaLogo size={38} className="drop-shadow-sm" />
-            <div className="leading-tight">
-              <p className="font-display font-extrabold text-[20px] tracking-[-0.04em] text-slate-900">
-                SIGMA
-              </p>
-              <p className="text-[11px] font-semibold tracking-[0.18em] text-slate-500 -mt-0.5">
-                MENTÖRLÜK
-              </p>
-            </div>
+            <Image
+              src="/logo.svg"
+              alt="Sigma Mentörlük"
+              width={150}
+              height={44}
+              className="h-auto w-32 sm:w-40 object-contain"
+              priority
+            />
           </Link>
           <nav className="flex items-center gap-2">
             <Link href="/login" className="btn-ghost !px-4">
-              Giriş
+              Giriş Yap
             </Link>
             <Link href="/register" className="btn-primary !px-4 !py-2 text-sm">
               Başla
@@ -90,12 +153,14 @@ export function Header({ user, profile }: HeaderProps) {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
         <div className="flex items-center gap-6">
           <Link href="/" className="flex items-center gap-2 group">
-            <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-emerald-500 to-emerald-600 flex items-center justify-center shadow-md shadow-emerald-500/20 group-hover:shadow-emerald-500/30 transition-shadow">
-              <Flame className="w-5 h-5 text-white" />
-            </div>
-            <span className="font-display font-bold text-xl tracking-tight text-slate-900 hidden sm:inline">
-              LMS<span className="gradient-text">Koçluk</span>
-            </span>
+            <Image
+              src="/logo.svg"
+              alt="Sigma Mentörlük"
+              width={150}
+              height={44}
+              className="h-auto w-32 sm:w-40 object-contain"
+              priority
+            />
           </Link>
 
           <nav className="hidden md:flex items-center gap-1">
@@ -128,26 +193,41 @@ export function Header({ user, profile }: HeaderProps) {
           <div className="hidden sm:flex items-center gap-3 mr-2 pl-3 border-l border-slate-200">
             <div className="flex flex-col items-end leading-tight">
               <span className="text-sm font-semibold text-slate-900">
-                {profile?.full_name || user?.email}
+                {authProfile?.full_name || authUser?.email}
               </span>
               <span className="text-xs capitalize font-medium gradient-text">
-                {profile?.role === 'coach' ? 'Koç' : 'Öğrenci'}
+                {authProfile?.role === 'coach' ? 'Koç' : 'Öğrenci'}
               </span>
             </div>
             <div className="w-10 h-10 rounded-full bg-slate-100 border border-slate-200 flex items-center justify-center">
               <UserRound className="w-5 h-5 text-slate-600" />
             </div>
           </div>
-          <button
+
+          <Link
+            href="/dashboard"
+            className="hidden md:inline-flex btn-secondary !px-3.5 !py-2 text-sm items-center gap-1.5"
+          >
+            <LayoutDashboard className="w-4 h-4" />
+            Dashboard
+            <ChevronRight className="w-3.5 h-3.5" />
+          </Link>
+
+          <Button
+            variant="ghost"
             onClick={handleSignOut}
-            className="btn-ghost !p-2.5"
+            loading={signingOut}
+            className="!p-2.5"
             title="Çıkış yap"
+            type="button"
           >
             <LogOut className="w-4 h-4" />
-          </button>
+          </Button>
+
           <button
             onClick={() => setMobileOpen(!mobileOpen)}
             className="btn-ghost !p-2.5 md:hidden"
+            aria-label="Menüyü aç"
           >
             {mobileOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
           </button>
@@ -163,13 +243,24 @@ export function Header({ user, profile }: HeaderProps) {
               </div>
               <div>
                 <p className="text-sm font-semibold text-slate-900">
-                  {profile?.full_name || user?.email}
+                  {authProfile?.full_name || authUser?.email}
                 </p>
                 <p className="text-xs capitalize gradient-text font-medium">
-                  {profile?.role === 'coach' ? 'Koç' : 'Öğrenci'}
+                  {authProfile?.role === 'coach' ? 'Koç' : 'Öğrenci'}
                 </p>
               </div>
             </div>
+
+            <Link
+              href="/dashboard"
+              onClick={() => setMobileOpen(false)}
+              className="flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium bg-gradient-to-r from-emerald-50 to-sky-50 text-slate-800 border border-emerald-100 mb-2"
+            >
+              <LayoutDashboard className="w-4 h-4 text-emerald-600" />
+              Dashboard
+              <ChevronRight className="w-3.5 h-3.5 ml-auto text-emerald-600" />
+            </Link>
+
             {links.map((link) => {
               const Icon = link.icon;
               const isActive =
@@ -193,6 +284,14 @@ export function Header({ user, profile }: HeaderProps) {
                 </Link>
               );
             })}
+
+            <button
+              onClick={handleSignOut}
+              className="w-full mt-2 flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium text-orange-700 bg-orange-50 border border-orange-100 hover:bg-orange-100 transition-colors"
+            >
+              <LogOut className="w-4 h-4" />
+              Çıkış Yap
+            </button>
           </div>
         </div>
       )}

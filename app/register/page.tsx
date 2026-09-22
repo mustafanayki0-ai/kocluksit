@@ -52,8 +52,8 @@ export default function RegisterPage() {
         return;
       }
 
-      router.refresh();
       router.push('/dashboard');
+      router.refresh();
     } catch (err) {
       setError('Beklenmedik bir hata oluştu. Lütfen tekrar deneyin.');
     } finally {
@@ -78,7 +78,7 @@ export default function RegisterPage() {
               <GraduationCap className="w-6 h-6 text-white" strokeWidth={2.5} />
             </div>
             <span className="font-display font-bold text-2xl tracking-tight">
-              LMS Koçluk
+              Sigma Mentörlük
             </span>
           </div>
 
@@ -121,7 +121,7 @@ export default function RegisterPage() {
                 <GraduationCap className="w-5 h-5 text-white" strokeWidth={2.5} />
               </div>
               <span className="font-display font-bold text-xl tracking-tight text-slate-900">
-                LMS <span className="gradient-text">Koçluk</span>
+                Sigma <span className="gradient-text">Mentörlük</span>
               </span>
             </div>
 

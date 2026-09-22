@@ -31,8 +31,8 @@ export default function LoginPage() {
         setError(signInError.message || 'Giriş yapılamadı. Bilgilerinizi kontrol edin.');
         return;
       }
-      router.refresh();
       router.push('/dashboard');
+      router.refresh();
     } catch (err) {
       setError('Beklenmedik bir hata oluştu. Lütfen tekrar deneyin.');
     } finally {
@@ -57,7 +57,7 @@ export default function LoginPage() {
               <GraduationCap className="w-6 h-6 text-white" strokeWidth={2.5} />
             </div>
             <span className="font-display font-bold text-2xl tracking-tight">
-              LMS Koçluk
+              Sigma Mentörlük
             </span>
           </div>
 
@@ -100,7 +100,7 @@ export default function LoginPage() {
                 <GraduationCap className="w-5 h-5 text-white" strokeWidth={2.5} />
               </div>
               <span className="font-display font-bold text-xl tracking-tight text-slate-900">
-                LMS <span className="gradient-text">Koçluk</span>
+                Sigma <span className="gradient-text">Mentörlük</span>
               </span>
             </div>
 
@@ -119,7 +119,7 @@ export default function LoginPage() {
                   id="email"
                   type="email"
                   label="E-posta Adresi"
-                  placeholder="ornek@lmskocluk.com"
+                  placeholder="ornek@sigmamentorluk.com"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   autoComplete="email"

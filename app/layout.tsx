@@ -8,11 +8,11 @@ import { SigmaLogo } from '@/components/ui/SigmaLogo';
 export const metadata: Metadata = {
   metadataBase: new URL('https://sigmamentorluk.com'),
   title: {
-    default: 'Sigma Mentörlük | Başarıya Giden Yolculuğun Rehberi',
+    default: 'Sigma Mentörlük | YKS Koçluk Sistemi',
     template: '%s | Sigma Mentörlük',
   },
   description:
-    'YKS, TYT ve AYT hazırlığında öğrencilere özel mentörlük desteği. Kişiselleştirilmiş haftalık programlar, birebir görüşmeler, gelişim grafikleri ve daha fazlası.',
+    'Sigma Mentörlük - YKS, TYT ve AYT hazırlığında öğrencilere özel koçluk ve mentörlük sistemi. Kişiselleştirilmiş haftalık programlar, birebir görüşmeler, gelişim grafikleri ve tamamen SSR destekli Next.js + Supabase altyapısı.',
   keywords: [
     'mentörlük',
     'koçluk',
