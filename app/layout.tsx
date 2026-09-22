@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from 'next';
 import './globals.css';
 import { createClient } from '@/lib/supabase/server';
 import { Header } from '@/components/layout/Header';
+import { ToastProvider } from '@/components/ui/Toast';
 import { Mail, MapPin, BookOpen, BarChart3, Users } from 'lucide-react';
 import { SigmaLogo } from '@/components/ui/SigmaLogo';
 
@@ -141,78 +142,80 @@ export default async function RootLayout({
         />
       </head>
       <body className="min-h-screen flex flex-col">
-        <Header user={user} profile={profile} />
-        <main className="flex-1">{children}</main>
-        <footer className="border-t border-slate-200 bg-slate-50/80 mt-24">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 py-14">
-            <div className="grid gap-10 md:grid-cols-4">
-              <div className="md:col-span-2">
-                <div className="flex items-center gap-2.5 mb-4">
-                  <SigmaLogo size={44} className="drop-shadow-sm" />
-                  <div className="leading-tight">
-                    <p className="font-display font-extrabold text-[22px] tracking-[-0.04em] text-slate-900">
-                      SIGMA
-                    </p>
-                    <p className="text-[12px] font-semibold tracking-[0.2em] text-slate-500 -mt-0.5">
-                      MENTÖRLÜK
-                    </p>
+        <ToastProvider>
+          <Header user={user} profile={profile} />
+          <main className="flex-1">{children}</main>
+          <footer className="border-t border-slate-200 bg-slate-50/80 mt-24">
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 py-14">
+              <div className="grid gap-10 md:grid-cols-4">
+                <div className="md:col-span-2">
+                  <div className="flex items-center gap-2.5 mb-4">
+                    <SigmaLogo size={44} className="drop-shadow-sm" />
+                    <div className="leading-tight">
+                      <p className="font-display font-extrabold text-[22px] tracking-[-0.04em] text-slate-900">
+                        SIGMA
+                      </p>
+                      <p className="text-[12px] font-semibold tracking-[0.2em] text-slate-500 -mt-0.5">
+                        MENTÖRLÜK
+                      </p>
+                    </div>
+                  </div>
+                  <p className="text-sm text-slate-600 max-w-md leading-relaxed">
+                    Sınav yolculuğunda öğrencinin yanında olan, güvenilir, takip odaklı bir mentörlük
+                    platformu. Hedefine ulaşırken yalnız değilsin.
+                  </p>
+                  <div className="mt-5 flex items-center gap-2 text-xs text-slate-500">
+                    <Mail className="w-3.5 h-3.5" />
+                    iletisim@sigmamentorluk.com
+                    <span className="mx-2 text-slate-300">•</span>
+                    <MapPin className="w-3.5 h-3.5" />
+                    Türkiye
                   </div>
                 </div>
-                <p className="text-sm text-slate-600 max-w-md leading-relaxed">
-                  Sınav yolculuğunda öğrencinin yanında olan, güvenilir, takip odaklı bir mentörlük
-                  platformu. Hedefine ulaşırken yalnız değilsin.
-                </p>
-                <div className="mt-5 flex items-center gap-2 text-xs text-slate-500">
-                  <Mail className="w-3.5 h-3.5" />
-                  iletisim@sigmamentorluk.com
-                  <span className="mx-2 text-slate-300">•</span>
-                  <MapPin className="w-3.5 h-3.5" />
-                  Türkiye
+
+                <div>
+                  <h4 className="font-display font-semibold text-slate-900 text-sm mb-4">Platform</h4>
+                  <ul className="space-y-3 text-sm text-slate-600">
+                    <li className="flex items-center gap-2 hover:text-emerald-600 transition-colors cursor-pointer">
+                      <BookOpen className="w-4 h-4 text-slate-400" /> Haftalık Program
+                    </li>
+                    <li className="flex items-center gap-2 hover:text-emerald-600 transition-colors cursor-pointer">
+                      <BarChart3 className="w-4 h-4 text-slate-400" /> Gelişim Grafikleri
+                    </li>
+                    <li className="flex items-center gap-2 hover:text-emerald-600 transition-colors cursor-pointer">
+                      <Users className="w-4 h-4 text-slate-400" /> Birebir Görüşmeler
+                    </li>
+                  </ul>
+                </div>
+
+                <div>
+                  <h4 className="font-display font-semibold text-slate-900 text-sm mb-4">Kurumsal</h4>
+                  <ul className="space-y-3 text-sm text-slate-600">
+                    <li className="hover:text-emerald-600 transition-colors cursor-pointer">Hakkımızda</li>
+                    <li className="hover:text-emerald-600 transition-colors cursor-pointer">Gizlilik Politikası</li>
+                    <li className="hover:text-emerald-600 transition-colors cursor-pointer">Kullanım Şartları</li>
+                    <li className="hover:text-emerald-600 transition-colors cursor-pointer">İletişim</li>
+                  </ul>
                 </div>
               </div>
 
-              <div>
-                <h4 className="font-display font-semibold text-slate-900 text-sm mb-4">Platform</h4>
-                <ul className="space-y-3 text-sm text-slate-600">
-                  <li className="flex items-center gap-2 hover:text-emerald-600 transition-colors cursor-pointer">
-                    <BookOpen className="w-4 h-4 text-slate-400" /> Haftalık Program
-                  </li>
-                  <li className="flex items-center gap-2 hover:text-emerald-600 transition-colors cursor-pointer">
-                    <BarChart3 className="w-4 h-4 text-slate-400" /> Gelişim Grafikleri
-                  </li>
-                  <li className="flex items-center gap-2 hover:text-emerald-600 transition-colors cursor-pointer">
-                    <Users className="w-4 h-4 text-slate-400" /> Birebir Görüşmeler
-                  </li>
-                </ul>
-              </div>
+              <div className="divider-soft my-10" />
 
-              <div>
-                <h4 className="font-display font-semibold text-slate-900 text-sm mb-4">Kurumsal</h4>
-                <ul className="space-y-3 text-sm text-slate-600">
-                  <li className="hover:text-emerald-600 transition-colors cursor-pointer">Hakkımızda</li>
-                  <li className="hover:text-emerald-600 transition-colors cursor-pointer">Gizlilik Politikası</li>
-                  <li className="hover:text-emerald-600 transition-colors cursor-pointer">Kullanım Şartları</li>
-                  <li className="hover:text-emerald-600 transition-colors cursor-pointer">İletişim</li>
-                </ul>
+              <div className="flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-slate-500">
+                <p>
+                  © {new Date().getFullYear()} <span className="font-semibold text-slate-700">Sigma Mentörlük</span> — Tüm hakları saklıdır.
+                </p>
+                <p className="flex items-center gap-1.5">
+                  <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-100 font-semibold">
+                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                    Aktif
+                  </span>
+                  7/24 Destek
+                </p>
               </div>
             </div>
-
-            <div className="divider-soft my-10" />
-
-            <div className="flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-slate-500">
-              <p>
-                © {new Date().getFullYear()} <span className="font-semibold text-slate-700">Sigma Mentörlük</span> — Tüm hakları saklıdır.
-              </p>
-              <p className="flex items-center gap-1.5">
-                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-100 font-semibold">
-                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-                  Aktif
-                </span>
-                7/24 Destek
-              </p>
-            </div>
-          </div>
-        </footer>
+          </footer>
+        </ToastProvider>
       </body>
     </html>
   );
