@@ -12,11 +12,17 @@ export default async function CoachStudentsPage() {
   const { data: profile } = await supabase.from('profiles').select('role').eq('id', user.id).single();
   if (profile?.role !== 'coach') redirect('/dashboard/student');
 
-  const { data: students } = await supabase
-    .from('students')
-    .select('*')
-    .eq('coach_id', user.id)
-    .order('created_at', { ascending: false });
+  let students = [];
+  try {
+    const { data: s } = await supabase
+      .from('students')
+      .select('*')
+      .eq('coach_id', user.id)
+      .order('created_at', { ascending: false });
+    students = s || [];
+  } catch (e) {
+    console.error('Öğrenci listesi hatası:', e);
+  }
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 py-8">
@@ -24,9 +30,9 @@ export default async function CoachStudentsPage() {
         <h1 className="font-display text-3xl font-bold mb-2">
           <span className="gradient-text">Öğrencilerim</span>
         </h1>
-        <p className="text-slate-400">Öğrencilerini yönet, program ata, görüşme planla ve notlar bırak.</p>
+        <p className="text-slate-500">Öğrencilerini yönet, program ata, görüşme planla ve notlar bırak.</p>
       </div>
-      <StudentList students={students || undefined} />
+      <StudentList students={students.length > 0 ? students : undefined} />
     </div>
   );
 }

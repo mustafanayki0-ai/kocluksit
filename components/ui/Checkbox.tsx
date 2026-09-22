@@ -1,7 +1,7 @@
 import { cn } from '@/lib/utils';
 
 interface CheckboxProps extends React.InputHTMLAttributes<HTMLInputElement> {
-  label?: string;
+  label?: React.ReactNode;
 }
 
 export function Checkbox({ label, className, id, checked, ...props }: CheckboxProps) {
@@ -12,7 +12,7 @@ export function Checkbox({ label, className, id, checked, ...props }: CheckboxPr
         className
       )}
     >
-      <div className="relative mt-0.5 flex-shrslate-0">
+      <div className="relative mt-0.5 flex-shrink-0">
         <input
           type="checkbox"
           id={id}
@@ -49,7 +49,7 @@ export function Checkbox({ label, className, id, checked, ...props }: CheckboxPr
           className={cn(
             'text-sm transition-all duration-200 leading-relaxed',
             checked
-              ? 'text-slate-400 line-through'
+              ? 'text-slate-500 line-through'
               : 'text-slate-800 group-hover:text-slate-900'
           )}
         >

@@ -23,72 +23,11 @@ interface DailyTasksProps {
   studentId?: string;
 }
 
-function buildSyntheticTasks(): DailyTask[] {
-  const today = new Date().toISOString();
-  return [
-    {
-      id: 't1',
-      student_id: 's1',
-      task_date: today,
-      title: 'TYT Matematik - Türev konu anlatımı',
-      description: 'Konu anlatım videolarını izle, örnek sorular çöz',
-      is_completed: false,
-      estimated_hours: 2,
-      created_at: today,
-      updated_at: today,
-    },
-    {
-      id: 't2',
-      student_id: 's1',
-      task_date: today,
-      title: 'Türkçe - Paragraf soru çözümü',
-      description: '100 paragraf sorusundan oluşan test',
-      is_completed: true,
-      estimated_hours: 1.5,
-      created_at: today,
-      updated_at: today,
-    },
-    {
-      id: 't3',
-      student_id: 's1',
-      task_date: today,
-      title: 'Fen Bilimleri - Tekrar testi',
-      description: 'Fizik 20 + Kimya 20 + Biyoloji 20 = 60 soru',
-      is_completed: false,
-      estimated_hours: 2.5,
-      created_at: today,
-      updated_at: today,
-    },
-    {
-      id: 't4',
-      student_id: 's1',
-      task_date: today,
-      title: 'Sosyal Bilgiler - Tarih konu tekrarı',
-      description: 'Kurtuluş Savaşı dönem kartografisi',
-      is_completed: false,
-      estimated_hours: 1,
-      created_at: today,
-      updated_at: today,
-    },
-    {
-      id: 't5',
-      student_id: 's1',
-      task_date: today,
-      title: 'Günlük Kelime Tekrarı (20 kelime)',
-      is_completed: true,
-      estimated_hours: 0.5,
-      created_at: today,
-      updated_at: today,
-    },
-  ];
-}
-
-export function DailyTasks({ tasks: initial }: DailyTasksProps) {
-  const [tasks, setTasks] = useState<DailyTask[]>(
-    initial && initial.length > 0 ? initial : buildSyntheticTasks()
-  );
+export function DailyTasks({ tasks: initial, studentId }: DailyTasksProps) {
+  const [tasks, setTasks] = useState<DailyTask[]>(initial ?? []);
   const [newTitle, setNewTitle] = useState('');
   const [adding, setAdding] = useState(false);
+  const [loading, setLoading] = useState<string | null>(null);
 
   const completedCount = tasks.filter((t) => t.is_completed).length;
   const totalHours = tasks.reduce(
@@ -101,6 +40,7 @@ export function DailyTasks({ tasks: initial }: DailyTasksProps) {
   const progress = tasks.length > 0 ? (completedCount / tasks.length) * 100 : 0;
 
   const toggleTask = (id: string) => {
+    setLoading(id);
     setTasks((prev) =>
       prev.map((t) =>
         t.id === id
@@ -108,6 +48,7 @@ export function DailyTasks({ tasks: initial }: DailyTasksProps) {
           : t
       )
     );
+    setTimeout(() => setLoading(null), 300);
   };
 
   const deleteTask = (id: string) => {
@@ -121,7 +62,7 @@ export function DailyTasks({ tasks: initial }: DailyTasksProps) {
       ...prev,
       {
         id: `t_${Date.now()}`,
-        student_id: 'local',
+        student_id: studentId || 'local',
         task_date: new Date().toISOString(),
         title: newTitle.trim(),
         description: null,
@@ -137,16 +78,16 @@ export function DailyTasks({ tasks: initial }: DailyTasksProps) {
 
   return (
     <Card className="relative overflow-hidden">
-      <div className="absolute -top-20 -right-20 w-64 h-64 rounded-full bg-emerald-500/8 blur-3xl" />
+      <div className="absolute -top-20 -right-20 w-64 h-64 rounded-full bg-emerald-500/5 blur-3xl" />
       <CardHeader>
         <div className="flex items-start justify-between flex-wrap gap-3">
           <div className="flex items-center gap-3">
-            <div className="w-11 h-11 rounded-xl bg-emerald-500/20 flex items-center justify-center">
-              <ListTodo className="w-5.5 h-5.5 text-emerald-400" />
+            <div className="w-11 h-11 rounded-xl bg-emerald-500/10 flex items-center justify-center">
+              <ListTodo className="w-5.5 h-5.5 text-emerald-600" />
             </div>
             <div>
               <div className="flex items-center gap-2 mb-1">
-                <span className="text-xs font-semibold uppercase tracking-wider text-ink-400">
+                <span className="text-xs font-semibold uppercase tracking-wider text-slate-500">
                   Bugün · {formatDate(new Date())}
                 </span>
               </div>
@@ -169,31 +110,31 @@ export function DailyTasks({ tasks: initial }: DailyTasksProps) {
 
         <div className="mt-5 space-y-2">
           <div className="flex items-center justify-between text-sm">
-            <span className="text-ink-400">Günlük İlerleme</span>
+            <span className="text-slate-500">Günlük İlerleme</span>
             <span className="font-display font-bold gradient-text">
               %{progress.toFixed(0)}
             </span>
           </div>
-          <div className="h-3 rounded-full bg-ink-800 overflow-hidden relative">
+          <div className="h-3 rounded-full bg-slate-200 overflow-hidden relative">
             <div
-              className="h-full rounded-full bg-gradient-to-r from-emerald-500 via-emerald-500 to-fire-500 transition-all duration-700 relative"
+              className="h-full rounded-full bg-gradient-to-r from-emerald-500 via-emerald-500 to-orange-500 transition-all duration-700 relative"
               style={{ width: `${progress}%` }}
             >
-              <div className="absolute inset-0 bg-[linear-gradient(90deg,transparent,rgba(255,255,255,0.2),transparent)] bg-[length:200%_100%] animate-shine" />
+              <div className="absolute inset-0 bg-[linear-gradient(90deg,transparent,rgba(255,255,255,0.3),transparent)] bg-[length:200%_100%] animate-shine" />
             </div>
           </div>
           {progress === 100 && (
-            <div className="flex items-center gap-2 text-sm text-emerald-400 pt-1 font-medium">
+            <div className="flex items-center gap-2 text-sm text-emerald-700 pt-1 font-medium">
               <Flame className="w-4 h-4" />
-              Harika! Bugünkü tüm hedeflerini bitirdin. Biraz dinlenmeyi unutma 💜
+              Harika! Bugünkü tüm hedeflerini bitirdin. Biraz dinlenmeyi unutma 💚
             </div>
           )}
         </div>
       </CardHeader>
       <CardBody className="space-y-2.5">
         {tasks.length === 0 && (
-          <div className="rounded-xl border border-dashed border-ink-700 p-8 text-center">
-            <p className="text-ink-400">Bugün için henüz görev eklenmemiş.</p>
+          <div className="rounded-xl border border-dashed border-slate-300 p-8 text-center">
+            <p className="text-slate-500">Bugün için henüz görev eklenmemiş.</p>
           </div>
         )}
 
@@ -203,13 +144,13 @@ export function DailyTasks({ tasks: initial }: DailyTasksProps) {
             className={cn(
               'group relative rounded-xl border transition-all duration-300 p-4',
               task.is_completed
-                ? 'bg-emerald-500/5 border-emerald-500/20'
-                : 'bg-ink-900/60 border-ink-800 hover:border-ink-700 hover:bg-ink-800/40'
+                ? 'bg-emerald-50/50 border-emerald-200'
+                : 'bg-white border-slate-200 hover:border-slate-300 hover:bg-slate-50/50'
             )}
           >
             <div className="flex items-start gap-3">
               <div className="mt-0.5 opacity-30 group-hover:opacity-100 transition-opacity cursor-grab">
-                <GripVertical className="w-4 h-4 text-ink-500" />
+                <GripVertical className="w-4 h-4 text-slate-400" />
               </div>
               <div className="flex-1 min-w-0">
                 <Checkbox
@@ -217,12 +158,12 @@ export function DailyTasks({ tasks: initial }: DailyTasksProps) {
                   onChange={() => toggleTask(task.id)}
                   label={
                     <div className="flex flex-col">
-                      <span className="text-[15px]">{task.title}</span>
+                      <span className={cn('text-[15px]', loading === task.id && 'opacity-60')}>{task.title}</span>
                       {task.description && (
                         <span
                           className={cn(
                             'text-xs mt-1 leading-relaxed',
-                            task.is_completed ? 'text-ink-600' : 'text-ink-500'
+                            task.is_completed ? 'text-slate-400' : 'text-slate-500'
                           )}
                         >
                           {task.description}
@@ -234,14 +175,14 @@ export function DailyTasks({ tasks: initial }: DailyTasksProps) {
               </div>
               <div className="flex items-center gap-2 flex-shrink-0 ml-2">
                 {task.estimated_hours && (
-                  <div className="chip bg-ink-800/70 text-ink-300 border border-ink-700 gap-1 text-[10px]">
+                  <div className="chip bg-slate-50 text-slate-600 border border-slate-200 gap-1 text-[10px]">
                     <Clock className="w-3 h-3" />
                     {task.estimated_hours} sa
                   </div>
                 )}
                 <button
                   onClick={() => deleteTask(task.id)}
-                  className="p-1.5 rounded-lg text-ink-500 hover:text-fire-400 hover:bg-fire-500/10 opacity-0 group-hover:opacity-100 transition-all"
+                  className="p-1.5 rounded-lg text-slate-400 hover:text-orange-600 hover:bg-orange-50 opacity-0 group-hover:opacity-100 transition-all"
                   title="Görevi sil"
                 >
                   <Trash2 className="w-4 h-4" />
@@ -252,7 +193,7 @@ export function DailyTasks({ tasks: initial }: DailyTasksProps) {
         ))}
 
         {adding ? (
-          <div className="rounded-xl border border-emerald-500/30 bg-emerald-500/5 p-3 space-y-2">
+          <div className="rounded-xl border border-emerald-200 bg-emerald-50/50 p-3 space-y-2">
             <Input
               placeholder="Yeni görev ekle..."
               value={newTitle}
@@ -285,7 +226,7 @@ export function DailyTasks({ tasks: initial }: DailyTasksProps) {
         ) : (
           <button
             onClick={() => setAdding(true)}
-            className="w-full p-3.5 rounded-xl border-2 border-dashed border-ink-700 hover:border-emerald-500/40 hover:bg-emerald-500/5 transition-all duration-200 flex items-center justify-center gap-2 text-sm text-ink-400 hover:text-emerald-300 font-medium"
+            className="w-full p-3.5 rounded-xl border-2 border-dashed border-slate-300 hover:border-emerald-400/50 hover:bg-emerald-50/30 transition-all duration-200 flex items-center justify-center gap-2 text-sm text-slate-500 hover:text-emerald-700 font-medium"
           >
             <Plus className="w-4 h-4" />
             Yeni görev ekle

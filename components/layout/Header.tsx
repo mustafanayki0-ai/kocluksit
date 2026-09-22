@@ -14,6 +14,7 @@ import {
   X,
   Sparkles,
   UserRound,
+  Flame,
 } from 'lucide-react';
 import { SigmaLogo } from '@/components/ui/SigmaLogo';
 import { useState } from 'react';

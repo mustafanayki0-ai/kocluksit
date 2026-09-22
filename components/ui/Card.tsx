@@ -23,7 +23,7 @@ interface CardHeaderProps {
 
 export function CardHeader({ children, className }: CardHeaderProps) {
   return (
-    <div className={cn('px-6 py-5 border-b border-slate-800', className)}>
+    <div className={cn('px-6 py-5 border-b border-slate-200', className)}>
       {children}
     </div>
   );
@@ -45,7 +45,7 @@ interface CardFooterProps {
 
 export function CardFooter({ children, className }: CardFooterProps) {
   return (
-    <div className={cn('px-6 py-4 border-t border-slate-800', className)}>
+    <div className={cn('px-6 py-4 border-t border-slate-200', className)}>
       {children}
     </div>
   );

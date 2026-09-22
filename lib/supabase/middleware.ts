@@ -9,11 +9,10 @@ export async function updateSession(request: NextRequest) {
   });
 
   const supabase = createServerClient(
-    "https://pddbuhqasaezonhoxuyf.supabase.co",
-    "sb_publishable_bDFRBKaOPDEM-9de2PLpRA_JUUlRCL3",
+    "https://rtqtzssavxfsdlcihigi.supabase.co",
+    "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJ0cXR6c3Nhdnhmc2RsY2loaWdpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTAxMDAxMDQsImV4cCI6MjEwNTY3NjEwNH0.pXu_0xiVxEaI2svL5CNX080ynLAOlLI9d-0YNmx0UVU",
     {
       cookies: {
-// ... alt kısımlara hiç dokunma, aynı kalsın
         get(name: string) {
           return request.cookies.get(name)?.value;
         },

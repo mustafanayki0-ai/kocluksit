@@ -17,14 +17,18 @@ export default async function StudentTasksPage() {
 
   let tasks = [];
   if (student) {
-    const today = new Date().toISOString().split('T')[0];
-    const { data: t } = await supabase
-      .from('daily_tasks')
-      .select('*')
-      .eq('student_id', student.id)
-      .gte('created_at', today)
-      .order('created_at', { ascending: false });
-    tasks = t ?? [];
+    try {
+      const today = new Date().toISOString().split('T')[0];
+      const { data: t } = await supabase
+        .from('daily_tasks')
+        .select('*')
+        .eq('student_id', student.id)
+        .gte('task_date', today)
+        .order('task_date', { ascending: false });
+      tasks = t ?? [];
+    } catch (e) {
+      console.error('Student tasks veri hatası:', e);
+    }
   }
 
   return (
@@ -33,7 +37,7 @@ export default async function StudentTasksPage() {
         <h1 className="font-display text-3xl font-bold mb-2">
           Günlük <span className="gradient-text">Görevlerim</span>
         </h1>
-        <p className="text-slate-400">Bugün neler yapacaksın? İlerlemeni takip etmek için işaretle.</p>
+        <p className="text-slate-500">Bugün neler yapacaksın? İlerlemeni takip etmek için işaretle.</p>
       </div>
       <DailyTasks tasks={tasks.length > 0 ? tasks : undefined} studentId={student?.id} />
     </div>

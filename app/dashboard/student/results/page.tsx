@@ -9,6 +9,9 @@ export default async function StudentResultsPage() {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) redirect('/login');
 
+  const { data: profile } = await supabase.from('profiles').select('role').eq('id', user.id).single();
+  if (profile?.role !== 'student') redirect('/dashboard/coach');
+
   const { data: student } = await supabase
     .from('students')
     .select('*')
@@ -18,20 +21,28 @@ export default async function StudentResultsPage() {
   let tytResults = [];
   let aytResults = [];
   if (student) {
-    const { data: tyt } = await supabase
-      .from('exam_results')
-      .select('*')
-      .eq('student_id', student.id)
-      .eq('exam_type', 'TYT')
-      .order('exam_date', { ascending: true });
-    tytResults = tyt ?? [];
-    const { data: ayt } = await supabase
-      .from('exam_results')
-      .select('*')
-      .eq('student_id', student.id)
-      .eq('exam_type', 'AYT')
-      .order('exam_date', { ascending: true });
-    aytResults = ayt ?? [];
+    try {
+      const { data: tyt } = await supabase
+        .from('exam_results')
+        .select('*')
+        .eq('student_id', student.id)
+        .eq('exam_type', 'TYT')
+        .order('exam_date', { ascending: true });
+      tytResults = tyt ?? [];
+    } catch (e) {
+      console.error('TYT sonuç hatası:', e);
+    }
+    try {
+      const { data: ayt } = await supabase
+        .from('exam_results')
+        .select('*')
+        .eq('student_id', student.id)
+        .eq('exam_type', 'AYT')
+        .order('exam_date', { ascending: true });
+      aytResults = ayt ?? [];
+    } catch (e) {
+      console.error('AYT sonuç hatası:', e);
+    }
   }
 
   return (
@@ -40,7 +51,7 @@ export default async function StudentResultsPage() {
         <h1 className="font-display text-3xl font-bold mb-2">
           Deneme <span className="gradient-text">Sonuçlarım</span>
         </h1>
-        <p className="text-slate-400">Zaman içindeki gelişimini inceleyerek güçlü ve zayıf yönlerini belirle.</p>
+        <p className="text-slate-500">Zaman içindeki gelişimini inceleyerek güçlü ve zayıf yönlerini belirle.</p>
       </div>
       <ExamChart type="TYT" results={tytResults} targetNet={100} />
       <ExamChart type="AYT" results={aytResults} targetNet={120} />

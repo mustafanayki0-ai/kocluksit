@@ -85,6 +85,14 @@
     @apply shadow-card-hover border-slate-300 -translate-y-0.5;
   }
 
+  .card-surface-hover {
+    @apply card-surface;
+  }
+
+  .noise-bg {
+    position: relative;
+  }
+
   .btn-primary {
     @apply inline-flex items-center justify-center gap-2
            px-5 py-2.5 rounded-xl text-sm font-semibold
@@ -104,10 +112,10 @@
            px-5 py-2.5 rounded-xl text-sm font-semibold
            text-slate-800
            bg-white
-           border-2 border-slate-800
+           border-2 border-slate-200
            transition-all duration-200
-           hover:bg-slate-900 hover:text-white hover:-translate-y-0.5
-           active:translate-y-0 active:bg-slate-950
+           hover:bg-slate-50 hover:border-slate-300 hover:-translate-y-0.5
+           active:translate-y-0 active:bg-slate-100
            focus:outline-none focus:ring-4 focus:ring-slate-500/15
            disabled:opacity-60 disabled:pointer-events-none;
   }
@@ -160,7 +168,7 @@
   }
 
   .gradient-text {
-    @apply bg-gradient-to-r from-emerald-500 via-sky-500 to-slate-800 bg-clip-text text-transparent;
+    @apply bg-gradient-to-r from-emerald-600 via-sky-600 to-slate-800 bg-clip-text text-transparent;
   }
 
   .gradient-text-fire {
@@ -179,8 +187,31 @@
     @apply h-px bg-gradient-to-r from-transparent via-slate-200 to-transparent;
   }
 
+  .glow-divider {
+    @apply h-px bg-gradient-to-r from-transparent via-slate-300 to-transparent;
+  }
+
   .form-card {
     @apply card-surface p-6 sm:p-8 w-full;
+  }
+
+  .shine-text {
+    @apply bg-gradient-to-r from-slate-700 via-emerald-600 to-slate-700 bg-clip-text text-transparent bg-[length:200%_100%] animate-shine;
+  }
+
+  .bg-grid-pattern {
+    background-image:
+      linear-gradient(to right, rgba(148, 163, 184, 0.15) 1px, transparent 1px),
+      linear-gradient(to bottom, rgba(148, 163, 184, 0.15) 1px, transparent 1px);
+  }
+
+  .card-dark {
+    @apply bg-slate-900 border border-slate-800 rounded-2xl shadow-card
+           transition-all duration-300 ease-out;
+  }
+
+  .card-dark-hover:hover {
+    @apply shadow-card-hover border-slate-700 -translate-y-0.5;
   }
 }
 
@@ -200,5 +231,30 @@
   .mask-fade-b {
     mask-image: linear-gradient(to bottom, black 75%, transparent 100%);
     -webkit-mask-image: linear-gradient(to bottom, black 75%, transparent 100%);
+  }
+
+  @keyframes shine {
+    0% { background-position: 200% center; }
+    100% { background-position: -200% center; }
+  }
+
+  .animate-shine {
+    animation: shine 4s linear infinite;
+  }
+
+  .w-5\.5 {
+    width: 1.375rem;
+  }
+
+  .h-5\.5 {
+    height: 1.375rem;
+  }
+
+  .w-4\.5 {
+    width: 1.125rem;
+  }
+
+  .h-4\.5 {
+    height: 1.125rem;
   }
 }

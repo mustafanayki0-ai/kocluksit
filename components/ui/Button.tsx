@@ -1,6 +1,7 @@
 import type { ReactNode } from 'react';
 import Link from 'next/link';
 import { cn } from '@/lib/utils';
+import { Loader2 } from 'lucide-react';
 
 type Variant = 'primary' | 'secondary' | 'accent' | 'ghost';
 type Size = 'sm' | 'md' | 'lg';
@@ -11,6 +12,7 @@ interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
   children: ReactNode;
   asLink?: boolean;
   href?: string;
+  loading?: boolean;
 }
 
 const sizeClasses: Record<Size, string> = {
@@ -33,20 +35,30 @@ export function Button({
   className,
   asLink = false,
   href,
+  loading = false,
+  disabled,
   ...props
 }: ButtonProps) {
-  const classes = cn(variantClasses[variant], sizeClasses[size], className);
+  const classes = cn(
+    variantClasses[variant],
+    sizeClasses[size],
+    loading && '!cursor-wait !opacity-70',
+    className
+  );
+  const finalDisabled = disabled || loading;
 
   if (asLink && href) {
     return (
       <Link href={href} className={classes}>
+        {loading && <Loader2 className="w-4 h-4 animate-spin" />}
         {children}
       </Link>
     );
   }
 
   return (
-    <button className={classes} {...props}>
+    <button className={classes} disabled={finalDisabled} {...props}>
+      {loading && <Loader2 className="w-4 h-4 animate-spin" />}
       {children}
     </button>
   );

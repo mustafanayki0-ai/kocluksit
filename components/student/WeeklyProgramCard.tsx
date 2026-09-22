@@ -7,7 +7,6 @@ import {
   FileText,
   CalendarRange,
   Download,
-  ExternalLink,
   Bookmark,
   CheckSquare,
   Sparkles,
@@ -66,37 +65,38 @@ type DayKey = keyof typeof programTemplate;
 const dayKeys: DayKey[] = ['Pazartesi', 'Salı', 'Çarşamba', 'Perşembe', 'Cuma', 'Cumartesi', 'Pazar'];
 
 const colorMap = {
-  brand: 'bg-emerald-500/10 text-emerald-300 border-emerald-500/20',
-  accent: 'bg-emerald-500/10 text-emerald-300 border-emerald-500/20',
-  fire: 'bg-fire-500/10 text-fire-300 border-fire-500/20',
-  ink: 'bg-slate-800 text-slate-300 border-slate-700',
+  brand: 'bg-emerald-50 text-emerald-700 border border-emerald-100',
+  accent: 'bg-sky-50 text-sky-700 border border-sky-100',
+  fire: 'bg-orange-50 text-orange-700 border border-orange-100',
+  ink: 'bg-slate-50 text-slate-700 border border-slate-200',
 } as const;
 
 const dotMap = {
-  brand: 'bg-emerald-400',
-  accent: 'bg-emerald-400',
-  fire: 'bg-fire-400',
+  brand: 'bg-emerald-500',
+  accent: 'bg-sky-500',
+  fire: 'bg-orange-500',
   ink: 'bg-slate-400',
 } as const;
 
 export function WeeklyProgramCard({ program }: WeeklyProgramCardProps) {
   const { start, end } = getWeekDates();
   const coachName = 'Koçun';
+  const useTemplate = !program || !program.content;
 
   return (
     <Card className="relative overflow-hidden">
-      <div className="absolute -top-20 -left-20 w-64 h-64 rounded-full bg-emerald-500/8 blur-3xl" />
-      <div className="absolute -top-20 -right-20 w-64 h-64 rounded-full bg-emerald-500/8 blur-3xl" />
+      <div className="absolute -top-20 -left-20 w-64 h-64 rounded-full bg-emerald-500/5 blur-3xl" />
+      <div className="absolute -top-20 -right-20 w-64 h-64 rounded-full bg-emerald-500/5 blur-3xl" />
       <CardHeader>
         <div className="flex items-start justify-between flex-wrap gap-3">
           <div className="flex items-center gap-3">
-            <div className="w-11 h-11 rounded-xl bg-gradient-to-br from-emerald-500/30 to-emerald-500/30 flex items-center justify-center">
-              <FileText className="w-5.5 h-5.5 text-emerald-300" />
+            <div className="w-11 h-11 rounded-xl bg-emerald-50 flex items-center justify-center">
+              <FileText className="w-5.5 h-5.5 text-emerald-600" />
             </div>
             <div>
               <div className="flex items-center gap-2 mb-1">
-                <CalendarRange className="w-4 h-4 text-slate-400" />
-                <span className="text-xs font-semibold uppercase tracking-wider text-slate-400">
+                <CalendarRange className="w-4 h-4 text-slate-500" />
+                <span className="text-xs font-semibold uppercase tracking-wider text-slate-500">
                   {formatDate(start)} – {formatDate(end)}
                 </span>
               </div>
@@ -120,25 +120,25 @@ export function WeeklyProgramCard({ program }: WeeklyProgramCardProps) {
 
         <div className="mt-5 grid grid-cols-2 md:grid-cols-4 gap-3">
           {[
-            { label: 'Ders Saati', value: '42+', icon: BookOpen },
-            { label: 'Hedef Soru', value: '750', icon: Target },
-            { label: 'Deneme', value: '2', icon: CheckSquare },
-            { label: 'Görüşme', value: '1', icon: Sparkles },
+            { label: 'Ders Saati', value: useTemplate ? '42+' : '-', icon: BookOpen },
+            { label: 'Hedef Soru', value: useTemplate ? '750' : '-', icon: Target },
+            { label: 'Deneme', value: useTemplate ? '2' : '-', icon: CheckSquare },
+            { label: 'Görüşme', value: useTemplate ? '1' : '-', icon: Sparkles },
           ].map((s) => {
             const Icon = s.icon;
             return (
               <div
                 key={s.label}
-                className="rounded-xl bg-slate-900/60 border border-slate-800 p-3 flex items-center gap-3"
+                className="rounded-xl bg-slate-50 border border-slate-200 p-3 flex items-center gap-3"
               >
-                <div className="w-9 h-9 rounded-lg bg-slate-800 flex items-center justify-center">
-                  <Icon className="w-4 h-4 text-emerald-400" />
+                <div className="w-9 h-9 rounded-lg bg-white border border-slate-200 flex items-center justify-center">
+                  <Icon className="w-4 h-4 text-emerald-600" />
                 </div>
                 <div>
                   <div className="text-[10px] uppercase tracking-wider text-slate-500">
                     {s.label}
                   </div>
-                  <div className="font-display text-xl font-bold text-slate-100 tabular-nums">
+                  <div className="font-display text-xl font-bold text-slate-800 tabular-nums">
                     {s.value}
                   </div>
                 </div>
@@ -159,18 +159,18 @@ export function WeeklyProgramCard({ program }: WeeklyProgramCardProps) {
                 className={cn(
                   'rounded-2xl border p-4 transition-all duration-300 relative',
                   isToday
-                    ? 'border-emerald-500/40 bg-gradient-to-br from-emerald-500/10 via-slate-900/70 to-transparent shadow-glow'
-                    : 'border-slate-800 bg-slate-900/40 hover:border-slate-700'
+                    ? 'border-emerald-200 bg-gradient-to-br from-emerald-50 via-white to-transparent shadow-sm'
+                    : 'border-slate-200 bg-white hover:border-slate-300'
                 )}
               >
                 <div className="flex items-center justify-between mb-3">
                   <div className="flex items-center gap-2">
-                    <h4 className="font-display text-lg font-bold text-slate-100">
+                    <h4 className="font-display text-lg font-bold text-slate-800">
                       {day}
                     </h4>
                     {isToday && (
                       <Badge variant="fire" size="sm" className="gap-1">
-                        <span className="w-1.5 h-1.5 rounded-full bg-fire-400 animate-pulse" />
+                        <span className="w-1.5 h-1.5 rounded-full bg-orange-500 animate-pulse" />
                         Bugün
                       </Badge>
                     )}
@@ -190,21 +190,21 @@ export function WeeklyProgramCard({ program }: WeeklyProgramCardProps) {
                     >
                       <div
                         className={cn(
-                          'w-1.5 mt-1.5 rounded-full flex-shrslate-0',
+                          'w-1.5 mt-1.5 rounded-full flex-shrink-0',
                           dotMap[it.color as keyof typeof dotMap]
                         )}
                         style={{ height: 'calc(100% - 12px)' }}
                       />
                       <div className="min-w-0 flex-1">
                         <div className="flex items-center justify-between gap-2 flex-wrap">
-                          <span className="text-[13px] font-semibold text-slate-100">
+                          <span className="text-[13px] font-semibold text-slate-800">
                             {it.title}
                           </span>
                           <span className="text-[10px] font-mono opacity-75">
                             {it.time}
                           </span>
                         </div>
-                        <p className="text-[12px] opacity-80 mt-0.5 leading-relaxed">
+                        <p className="text-[12px] opacity-80 mt-0.5 leading-relaxed text-slate-600">
                           {it.desc}
                         </p>
                       </div>
@@ -217,12 +217,12 @@ export function WeeklyProgramCard({ program }: WeeklyProgramCardProps) {
         </div>
 
         {program?.content && (
-          <div className="mt-6 rounded-xl bg-slate-900/60 border border-slate-800 p-5">
-            <h5 className="font-display font-semibold text-slate-100 mb-2 flex items-center gap-2">
-              <Sparkles className="w-4 h-4 text-fire-400" />
+          <div className="mt-6 rounded-xl bg-slate-50 border border-slate-200 p-5">
+            <h5 className="font-display font-semibold text-slate-800 mb-2 flex items-center gap-2">
+              <Sparkles className="w-4 h-4 text-orange-500" />
               Koçun Özel Notu
             </h5>
-            <p className="text-sm text-slate-300 whitespace-pre-wrap leading-relaxed">
+            <p className="text-sm text-slate-600 whitespace-pre-wrap leading-relaxed">
               {program.content}
             </p>
           </div>
