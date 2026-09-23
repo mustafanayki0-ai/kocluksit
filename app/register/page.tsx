@@ -2,21 +2,18 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
-import { Eye, EyeOff, Mail, Lock, User, Phone, ArrowRight, GraduationCap, CheckCircle2, UserRound, Briefcase, Sparkles } from 'lucide-react';
-import { createClient } from '@/lib/supabase/client';
-import { Input, Select } from '@/components/ui/Input';
+import { Eye, EyeOff, Mail, Lock, User, Phone, ArrowRight, GraduationCap, CheckCircle2, Sparkles } from 'lucide-react';
+import { Input } from '@/components/ui/Input';
 import { Button } from '@/components/ui/Button';
 import { Badge } from '@/components/ui/Badge';
 import { registerStudent } from '@/app/actions/auth';
 
 export default function RegisterPage() {
-  const supabase = createClient();
   const [form, setForm] = useState({
     fullName: '',
     email: '',
     phone: '',
     password: '',
-    role: 'student' as 'student' | 'coach',
   });
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -39,29 +36,6 @@ export default function RegisterPage() {
     }
 
     try {
-      if (form.role === 'coach') {
-        const { error: signUpError } = await supabase.auth.signUp({
-          email: form.email,
-          password: form.password,
-          options: {
-            data: {
-              full_name: form.fullName,
-              phone: form.phone,
-              role: form.role,
-            },
-          },
-        });
-        if (signUpError) {
-          setError(signUpError.message || 'Kayıt olunamadı, lütfen tekrar deneyin.');
-          setLoading(false);
-          return;
-        }
-        if (typeof window !== 'undefined') {
-          window.location.href = '/dashboard';
-        }
-        return;
-      }
-
       const fd = new FormData();
       fd.set('fullName', form.fullName);
       fd.set('email', form.email);
@@ -113,7 +87,7 @@ export default function RegisterPage() {
               Yolculuğa şimdi katıl.
             </h1>
             <p className="text-white/85 text-lg max-w-md leading-relaxed">
-              İster öğrenci, ister koç olun; başarı odaklı bir platformda yerinizi hemen alın.
+              Öğrenci hesabı oluştur, koçluk deneyimine dahil ol ve hedeflerine bir adım daha yaklaş.
             </p>
 
             <ul className="space-y-3.5 max-w-md">
@@ -153,7 +127,7 @@ export default function RegisterPage() {
                   Hesap oluştur ✨
                 </h2>
                 <p className="text-slate-500 text-sm leading-relaxed">
-                  Birkaç adım ile hesabını oluştur, koçluk deneyimine dahil ol.
+                  Birkaç adım ile öğrenci hesabını oluştur, koçluk deneyimine dahil ol.
                 </p>
               </div>
 
@@ -195,18 +169,6 @@ export default function RegisterPage() {
                   />
                 </div>
 
-                <Select
-                  id="role"
-                  label="Hesap Türü"
-                  value={form.role}
-                  onChange={(e) => setForm({ ...form, role: e.target.value as 'student' | 'coach' })}
-                  options={[
-                    { value: 'student', label: 'Öğrenci' },
-                    { value: 'coach', label: 'Koç / Eğitmen' },
-                  ]}
-                >
-                </Select>
-
                 <div>
                   <label htmlFor="password" className="label">Şifre</label>
                   <div className="relative">
@@ -243,25 +205,6 @@ export default function RegisterPage() {
                   Hesabı Oluştur
                   <ArrowRight className="w-4 h-4" />
                 </Button>
-
-                <div className="flex items-center justify-center gap-4 pt-1">
-                  <span className={`flex items-center gap-1.5 text-xs font-medium px-3 py-1.5 rounded-lg border transition-colors ${
-                    form.role === 'student'
-                      ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
-                      : 'text-slate-500 border-transparent'
-                  }`}>
-                    <UserRound className="w-3.5 h-3.5" />
-                    Öğrenci
-                  </span>
-                  <span className={`flex items-center gap-1.5 text-xs font-medium px-3 py-1.5 rounded-lg border transition-colors ${
-                    form.role === 'coach'
-                      ? 'bg-sky-50 text-sky-700 border-sky-200'
-                      : 'text-slate-500 border-transparent'
-                  }`}>
-                    <Briefcase className="w-3.5 h-3.5" />
-                    Koç
-                  </span>
-                </div>
               </form>
 
               <div className="divider-soft my-6" />
