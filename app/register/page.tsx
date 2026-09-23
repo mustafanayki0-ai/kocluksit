@@ -7,6 +7,7 @@ import { createClient } from '@/lib/supabase/client';
 import { Input, Select } from '@/components/ui/Input';
 import { Button } from '@/components/ui/Button';
 import { Badge } from '@/components/ui/Badge';
+import { registerStudent } from '@/app/actions/auth';
 
 export default function RegisterPage() {
   const supabase = createClient();
@@ -31,26 +32,48 @@ export default function RegisterPage() {
       setLoading(false);
       return;
     }
+    if (!form.phone.trim()) {
+      setError('Telefon numarası zorunludur.');
+      setLoading(false);
+      return;
+    }
 
     try {
-      const { error: signUpError } = await supabase.auth.signUp({
-        email: form.email,
-        password: form.password,
-        options: {
-          data: {
-            full_name: form.fullName,
-            phone: form.phone,
-            role: form.role,
+      if (form.role === 'coach') {
+        const { error: signUpError } = await supabase.auth.signUp({
+          email: form.email,
+          password: form.password,
+          options: {
+            data: {
+              full_name: form.fullName,
+              phone: form.phone,
+              role: form.role,
+            },
           },
-        },
-      });
-
-      if (signUpError) {
-        setError(signUpError.message || 'Kayıt olunamadı, lütfen tekrar deneyin.');
-        setLoading(false);
+        });
+        if (signUpError) {
+          setError(signUpError.message || 'Kayıt olunamadı, lütfen tekrar deneyin.');
+          setLoading(false);
+          return;
+        }
+        if (typeof window !== 'undefined') {
+          window.location.href = '/dashboard';
+        }
         return;
       }
 
+      const fd = new FormData();
+      fd.set('fullName', form.fullName);
+      fd.set('email', form.email);
+      fd.set('phone', form.phone);
+      fd.set('password', form.password);
+
+      const result = await registerStudent(fd);
+      if (!result.ok) {
+        setError(result.error || 'Kayıt olunamadı.');
+        setLoading(false);
+        return;
+      }
       if (typeof window !== 'undefined') {
         window.location.href = '/dashboard';
       }
@@ -162,11 +185,12 @@ export default function RegisterPage() {
                   <Input
                     id="phone"
                     type="tel"
-                    label="Telefon (opsiyonel)"
+                    label="Telefon Numarası"
                     placeholder="05XX XXX XX XX"
                     value={form.phone}
                     onChange={(e) => setForm({ ...form, phone: e.target.value })}
                     autoComplete="tel"
+                    required
                     leftIcon={<Phone className="w-4 h-4 text-slate-400" />}
                   />
                 </div>

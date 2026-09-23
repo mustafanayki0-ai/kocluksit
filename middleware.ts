@@ -6,16 +6,13 @@ const SUPABASE_URL = "https://rtqtzssavxfsdlcihigi.supabase.co";
 const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJ0cXR6c3Nhdnhmc2RsY2loaWdpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTAxMDAxMDQsImV4cCI6MjEwNTY3NjEwNH0.pXu_0xiVxEaI2svL5CNX080ynLAOlLI9d-0YNmx0UVU";
 
 /**
- * Middleware (Döngü Kırıcı)
+ * Middleware — Sadece auth var/yok kontrolü.
+ * Rol tabanlı yönlendirme app/dashboard/* sayfalarının içinde Server Component ile yapılır.
  *
- * Sadece 2 Yönlendirme Kuralı:
- *  1. Oturumu YOK ve /dashboard* altındaysa => /login'e yönlendir.
- *  2. Oturumu VAR ve /login VEYA /register rotalarındaysa => /dashboard'a yönlendir.
- *
- * ÇOK ÖNEMLİ:
- *  - Oturum açan kullanıcı / (anasayfa) rotasındaysa KESİNLİKLE YÖNLENDİRME YAPMA (döngüyü kırar).
- *  - Hiçbir şekilde role/profiles tablosuna bakma; bu işlem dashboard sayfasına bırakılır.
- *  - Kullanıcı /dashboard* rotasındaysa (hem giriş yapmış hem hedefte) yeniden yönlendirme YAPMA.
+ * Kurallar:
+ *  1. Oturumu YOK + /dashboard* ise => /login'e yönlendir.
+ *  2. Oturumu VAR + /login veya /register ise => /dashboard'a yönlendir.
+ *  3. Diğer tüm durumlarda devam et.
  */
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
@@ -59,14 +56,11 @@ export async function middleware(request: NextRequest) {
     authenticated = false;
   }
 
-  // KURAL 1: Oturum yoksa dashboard erişimini login'e at
   if (isDashboard && !authenticated) {
     const to = new URL('/login', request.url);
     return NextResponse.redirect(to);
   }
 
-  // KURAL 2: Oturum varsa SADECE /login ve /register'da dashboard'a yönlendir
-  // / (anasayfa) BURAYA DAHIL DEGIL.
   if (authenticated && isAuthPage) {
     const to = new URL('/dashboard', request.url);
     return NextResponse.redirect(to);
