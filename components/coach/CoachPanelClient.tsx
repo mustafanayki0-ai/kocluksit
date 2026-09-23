@@ -34,7 +34,7 @@ import {
 } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
 import { useToast } from '@/components/ui/Toast';
-import { cn } from '@/lib/utils';
+import { cn, DAYS, type DayKey, dayIndexFromDate, nearestDateForDay, todayDayKey } from '@/lib/utils';
 
 type Student = {
   id: string;
@@ -117,8 +117,10 @@ export function CoachPanelClient({ coachId, coachName, initialStudents }: CoachP
   const [addingTask, setAddingTask] = useState(false);
   const [taskTitle, setTaskTitle] = useState('');
   const [taskDesc, setTaskDesc] = useState('');
-  const [taskDate, setTaskDate] = useState(() => new Date().toISOString().slice(0, 10));
+  const [taskDayKey, setTaskDayKey] = useState<DayKey>(todayDayKey());
+  const [taskDate, setTaskDate] = useState(() => nearestDateForDay(DAYS.find((d) => d.key === todayDayKey())!.idx));
   const [savingTask, setSavingTask] = useState(false);
+  const [activeDay, setActiveDay] = useState<DayKey>(todayDayKey());
 
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editTitle, setEditTitle] = useState('');
@@ -245,6 +247,11 @@ export function CoachPanelClient({ coachId, coachName, initialStudents }: CoachP
   const completedTasks = tasks.filter((t) => t.is_completed).length;
   const totalTasks = tasks.length;
   const taskProgress = totalTasks ? Math.round((completedTasks / totalTasks) * 100) : 0;
+  const filteredTasksByDay = useMemo(() => {
+    const curDay = DAYS.find((d) => d.key === activeDay);
+    if (!curDay) return tasks;
+    return tasks.filter((t) => dayIndexFromDate(t.task_date ?? t.created_at) === curDay.idx);
+  }, [tasks, activeDay]);
 
   async function handleAddStudent(e: React.FormEvent) {
     e.preventDefault();
@@ -288,13 +295,21 @@ export function CoachPanelClient({ coachId, coachName, initialStudents }: CoachP
     setEditingId(null);
     setTaskTitle('');
     setTaskDesc('');
-    setTaskDate(new Date().toISOString().slice(0, 10));
+    const defDay = DAYS.find((d) => d.key === activeDay)!;
+    setTaskDayKey(defDay.key);
+    setTaskDate(nearestDateForDay(defDay.idx));
   }
 
   function cancelAddTask() {
     setAddingTask(false);
     setTaskTitle('');
     setTaskDesc('');
+  }
+
+  function setTaskDayAndDate(key: DayKey) {
+    setTaskDayKey(key);
+    const def = DAYS.find((d) => d.key === key)!;
+    setTaskDate(nearestDateForDay(def.idx));
   }
 
   async function submitTask(e: React.FormEvent) {
@@ -767,7 +782,7 @@ export function CoachPanelClient({ coachId, coachName, initialStudents }: CoachP
                         <X className="w-4 h-4" />
                       </button>
                     </div>
-                    <form onSubmit={submitTask} className="grid sm:grid-cols-[1fr_180px] gap-3 items-end">
+                    <form onSubmit={submitTask} className="grid sm:grid-cols-1 gap-3 items-end">
                       <div className="space-y-3">
                         <div>
                           <label className="block text-xs font-semibold text-slate-600 mb-1.5">
@@ -793,8 +808,34 @@ export function CoachPanelClient({ coachId, coachName, initialStudents }: CoachP
                             className="w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-sky-500/30 focus:border-sky-500 transition"
                           />
                         </div>
+                        <div>
+                          <label className="block text-xs font-semibold text-slate-600 mb-2">
+                            Gün
+                          </label>
+                          <div className="grid grid-cols-3 sm:grid-cols-7 gap-2">
+                            {DAYS.map((d) => {
+                              const active = d.key === taskDayKey;
+                              return (
+                                <button
+                                  key={d.key}
+                                  type="button"
+                                  onClick={() => setTaskDayAndDate(d.key)}
+                                  className={cn(
+                                    'py-2 rounded-lg text-xs font-semibold transition border',
+                                    active
+                                      ? 'bg-gradient-to-br from-sky-600 to-emerald-600 text-white border-transparent shadow'
+                                      : 'bg-white text-slate-700 border-slate-200 hover:border-sky-300 hover:text-sky-700'
+                                  )}
+                                >
+                                  <span className="hidden sm:inline">{d.label}</span>
+                                  <span className="sm:hidden">{d.short}</span>
+                                </button>
+                              );
+                            })}
+                          </div>
+                        </div>
                       </div>
-                      <div className="space-y-3">
+                      <div className="grid sm:grid-cols-[1fr_auto] gap-3">
                         <div>
                           <label className="block text-xs font-semibold text-slate-600 mb-1.5">
                             Tarih
@@ -851,20 +892,64 @@ export function CoachPanelClient({ coachId, coachName, initialStudents }: CoachP
 
                 {/* Görevler Listesi */}
                 <section className="rounded-3xl border border-slate-200 bg-white p-5 sm:p-6 shadow-sm">
-                  <div className="flex items-center justify-between gap-3 mb-5">
+                  <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between mb-4">
                     <h3 className="font-bold text-lg text-slate-900 flex items-center gap-2">
                       <Target className="w-4.5 h-4.5 text-sky-600" />
-                      {selectedStudent.full_name} · Görevleri
+                      {selectedStudent.full_name} · Haftalık Program
                     </h3>
                     {!addingTask && (
                       <button
                         type="button"
                         onClick={openAddTask}
-                        className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-sky-50 text-sky-700 text-xs font-semibold border border-sky-100 hover:bg-sky-100 transition"
+                        className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-sky-50 text-sky-700 text-xs font-semibold border border-sky-100 hover:bg-sky-100 transition self-start sm:self-auto"
                       >
                         <Plus className="w-3.5 h-3.5" /> Ekle
                       </button>
                     )}
+                  </div>
+
+                  <div className="mb-4 flex flex-wrap gap-1.5 rounded-2xl bg-slate-100/60 p-1.5 border border-slate-200/80">
+                    {DAYS.map((d) => {
+                      const active = d.key === activeDay;
+                      const dayTasks = tasks.filter(
+                        (t) => dayIndexFromDate(t.task_date ?? t.created_at) === d.idx
+                      );
+                      const done = dayTasks.filter((t) => t.is_completed).length;
+                      return (
+                        <button
+                          key={d.key}
+                          type="button"
+                          onClick={() => setActiveDay(d.key)}
+                          className={cn(
+                            'flex-1 min-w-[88px] px-2.5 py-2 rounded-xl text-xs font-semibold transition flex items-center justify-between gap-2',
+                            active
+                              ? 'bg-white text-sky-700 shadow-sm ring-1 ring-sky-200'
+                              : 'text-slate-600 hover:text-slate-800 hover:bg-white/60'
+                          )}
+                        >
+                          <span className="flex items-center gap-1">
+                            <span className="hidden sm:inline">{d.label}</span>
+                            <span className="sm:hidden">{d.short}</span>
+                          </span>
+                          <span
+                            className={cn(
+                              'inline-flex items-center justify-center min-w-[22px] h-[22px] px-1.5 rounded-full text-[10px] font-bold',
+                              active
+                                ? dayTasks.length > 0 && done === dayTasks.length
+                                  ? 'bg-emerald-500 text-white'
+                                  : 'bg-sky-100 text-sky-700'
+                                : dayTasks.length > 0
+                                ? done === dayTasks.length
+                                  ? 'bg-emerald-100 text-emerald-700'
+                                  : 'bg-slate-200 text-slate-700'
+                                : 'bg-slate-200/70 text-slate-500'
+                            )}
+                          >
+                            {dayTasks.length}
+                          </span>
+                        </button>
+                      );
+                    })}
                   </div>
 
                   {loadingDetail && tasks.length === 0 ? (
@@ -873,17 +958,19 @@ export function CoachPanelClient({ coachId, coachName, initialStudents }: CoachP
                         <div key={i} className="h-16 rounded-xl bg-slate-100 animate-pulse" />
                       ))}
                     </div>
-                  ) : tasks.length === 0 ? (
+                  ) : filteredTasksByDay.length === 0 ? (
                     <div className="py-12 text-center border-2 border-dashed border-slate-200 rounded-2xl">
                       <Target className="w-12 h-12 mx-auto text-slate-300 mb-3" />
-                      <p className="font-semibold text-slate-700">Henüz görev yok</p>
+                      <p className="font-semibold text-slate-700">
+                        {DAYS.find((d) => d.key === activeDay)?.label} için henüz görev yok
+                      </p>
                       <p className="text-sm text-slate-500 mt-1">
-                        Yukarıdaki buton ile ilk görevi oluşturun.
+                        Yukarıdaki &quot;Ekle&quot; butonu ile bu güne ilk görevi oluşturun.
                       </p>
                     </div>
                   ) : (
                     <ul className="space-y-2.5">
-                      {tasks.map((t) => {
+                      {filteredTasksByDay.map((t) => {
                         if (editingId === t.id) {
                           return (
                             <li

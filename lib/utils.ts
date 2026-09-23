@@ -78,3 +78,40 @@ export function getMotivationalQuote(): { text: string; author: string } {
   ];
   return quotes[Math.floor(Math.random() * quotes.length)];
 }
+
+export const DAYS = [
+  { idx: 1, key: 'monday', short: 'Pzt', label: 'Pazartesi' },
+  { idx: 2, key: 'tuesday', short: 'Sal', label: 'Salı' },
+  { idx: 3, key: 'wednesday', short: 'Çar', label: 'Çarşamba' },
+  { idx: 4, key: 'thursday', short: 'Per', label: 'Perşembe' },
+  { idx: 5, key: 'friday', short: 'Cum', label: 'Cuma' },
+  { idx: 6, key: 'saturday', short: 'Cmt', label: 'Cumartesi' },
+  { idx: 0, key: 'sunday', short: 'Paz', label: 'Pazar' },
+] as const;
+
+export type DayKey = (typeof DAYS)[number]['key'];
+
+export function nearestDateForDay(dayIndex: number): string {
+  const d = new Date();
+  d.setHours(0, 0, 0, 0);
+  const today = d.getDay();
+  let diff = dayIndex - today;
+  if (diff < 0) diff += 7;
+  d.setDate(d.getDate() + diff);
+  return d.toISOString().slice(0, 10);
+}
+
+export function dayIndexFromDate(dateStr: string): number {
+  try {
+    return new Date(dateStr + 'T00:00:00').getDay();
+  } catch {
+    return -1;
+  }
+}
+
+export function todayDayKey(): DayKey {
+  const d = new Date();
+  const idx = d.getDay();
+  const f = DAYS.find((x) => x.idx === idx);
+  return (f ?? DAYS[0]).key;
+}

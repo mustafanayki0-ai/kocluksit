@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { Card, CardBody, CardHeader } from '@/components/ui/Card';
 import { Badge } from '@/components/ui/Badge';
 import { Checkbox } from '@/components/ui/Checkbox';
@@ -10,9 +10,10 @@ import {
   CheckCircle2,
   Flame,
   GripVertical,
+  CalendarDays,
 } from 'lucide-react';
 import type { DailyTask } from '@/lib/types';
-import { cn, formatDate } from '@/lib/utils';
+import { cn, DAYS, type DayKey, dayIndexFromDate, todayDayKey } from '@/lib/utils';
 
 interface DailyTasksProps {
   tasks?: DailyTask[];
@@ -22,16 +23,23 @@ interface DailyTasksProps {
 export function DailyTasks({ tasks: initial }: DailyTasksProps) {
   const [tasks, setTasks] = useState<DailyTask[]>(initial ?? []);
   const [loading, setLoading] = useState<string | null>(null);
+  const [activeDay, setActiveDay] = useState<DayKey>(todayDayKey());
 
-  const completedCount = tasks.filter((t) => t.is_completed).length;
-  const totalHours = tasks.reduce(
+  const filtered = useMemo(() => {
+    const curDay = DAYS.find((d) => d.key === activeDay);
+    if (!curDay) return tasks;
+    return tasks.filter((t) => dayIndexFromDate(t.task_date ?? t.created_at) === curDay.idx);
+  }, [tasks, activeDay]);
+
+  const completedCount = filtered.filter((t) => t.is_completed).length;
+  const totalHours = filtered.reduce(
     (sum, t) => sum + (t.estimated_hours ?? 0),
     0
   );
-  const completedHours = tasks
+  const completedHours = filtered
     .filter((t) => t.is_completed)
     .reduce((sum, t) => sum + (t.estimated_hours ?? 0), 0);
-  const progress = tasks.length > 0 ? (completedCount / tasks.length) * 100 : 0;
+  const progress = filtered.length > 0 ? (completedCount / filtered.length) * 100 : 0;
 
   const toggleTask = (id: string) => {
     setLoading(id);
@@ -56,12 +64,13 @@ export function DailyTasks({ tasks: initial }: DailyTasksProps) {
             </div>
             <div>
               <div className="flex items-center gap-2 mb-1">
-                <span className="text-xs font-semibold uppercase tracking-wider text-slate-500">
-                  Bugün · {formatDate(new Date())}
+                <span className="text-xs font-semibold uppercase tracking-wider text-slate-500 flex items-center gap-1">
+                  <CalendarDays className="w-3 h-3" />
+                  Haftalık Program
                 </span>
               </div>
               <h3 className="font-display text-xl font-bold">
-                Günlük <span className="gradient-text">Görevlerin</span>
+                <span className="gradient-text">Görevlerin</span>
               </h3>
               <p className="text-xs text-slate-500 mt-1">
                 Sadece tamamlandı olarak işaretleyebilirsin.
@@ -71,7 +80,7 @@ export function DailyTasks({ tasks: initial }: DailyTasksProps) {
           <div className="flex items-center gap-2 flex-wrap">
             <Badge variant="accent" className="gap-1.5">
               <CheckCircle2 className="w-3 h-3" />
-              {completedCount}/{tasks.length} tamam
+              {completedCount}/{filtered.length} tamam
             </Badge>
             <Badge variant="fire" className="gap-1.5">
               <Clock className="w-3 h-3" />
@@ -80,9 +89,55 @@ export function DailyTasks({ tasks: initial }: DailyTasksProps) {
           </div>
         </div>
 
+        <div className="mt-5 flex flex-wrap gap-1.5 rounded-2xl bg-slate-100/70 p-1.5 border border-slate-200/80">
+          {DAYS.map((d) => {
+            const active = d.key === activeDay;
+            const dayTasks = tasks.filter(
+              (t) => dayIndexFromDate(t.task_date ?? t.created_at) === d.idx
+            );
+            const done = dayTasks.filter((t) => t.is_completed).length;
+            return (
+              <button
+                key={d.key}
+                type="button"
+                onClick={() => setActiveDay(d.key)}
+                className={cn(
+                  'flex-1 min-w-[80px] px-2.5 py-2 rounded-xl text-xs font-semibold transition flex items-center justify-between gap-2',
+                  active
+                    ? 'bg-white text-emerald-700 shadow-sm ring-1 ring-emerald-200'
+                    : 'text-slate-600 hover:text-slate-800 hover:bg-white/60'
+                )}
+              >
+                <span className="flex items-center gap-1">
+                  <span className="hidden sm:inline">{d.label}</span>
+                  <span className="sm:hidden">{d.short}</span>
+                </span>
+                <span
+                  className={cn(
+                    'inline-flex items-center justify-center min-w-[20px] h-[20px] px-1 rounded-full text-[10px] font-bold',
+                    active
+                      ? dayTasks.length > 0 && done === dayTasks.length
+                        ? 'bg-emerald-500 text-white'
+                        : 'bg-emerald-100 text-emerald-700'
+                      : dayTasks.length > 0
+                      ? done === dayTasks.length
+                        ? 'bg-emerald-100 text-emerald-700'
+                        : 'bg-slate-200 text-slate-700'
+                      : 'bg-slate-200/70 text-slate-500'
+                  )}
+                >
+                  {dayTasks.length}
+                </span>
+              </button>
+            );
+          })}
+        </div>
+
         <div className="mt-5 space-y-2">
           <div className="flex items-center justify-between text-sm">
-            <span className="text-slate-500">Günlük İlerleme</span>
+            <span className="text-slate-500">
+              {DAYS.find((d) => d.key === activeDay)?.label} · İlerleme
+            </span>
             <span className="font-display font-bold gradient-text">
               %{progress.toFixed(0)}
             </span>
@@ -95,24 +150,26 @@ export function DailyTasks({ tasks: initial }: DailyTasksProps) {
               <div className="absolute inset-0 bg-[linear-gradient(90deg,transparent,rgba(255,255,255,0.3),transparent)] bg-[length:200%_100%] animate-shine" />
             </div>
           </div>
-          {progress === 100 && (
+          {progress === 100 && filtered.length > 0 && (
             <div className="flex items-center gap-2 text-sm text-emerald-700 pt-1 font-medium">
               <Flame className="w-4 h-4" />
-              Harika! Bugünkü tüm hedeflerini bitirdin. Biraz dinlenmeyi unutma 💚
+              Harika! Seçtiğin gündeki tüm hedeflerini bitirdin 💚
             </div>
           )}
         </div>
       </CardHeader>
       <CardBody className="space-y-2.5">
-        {tasks.length === 0 && (
+        {filtered.length === 0 && (
           <div className="rounded-xl border border-dashed border-slate-300 p-8 text-center">
             <ListTodo className="w-12 h-12 mx-auto text-slate-300 mb-3" />
-            <p className="font-semibold text-slate-700">Bugün için henüz görev atanmamış</p>
+            <p className="font-semibold text-slate-700">
+              {DAYS.find((d) => d.key === activeDay)?.label} için henüz görev atanmamış
+            </p>
             <p className="text-sm text-slate-500 mt-1">Koçun sana görev atadığında burada listelenecek.</p>
           </div>
         )}
 
-        {tasks.map((task) => (
+        {filtered.map((task) => (
           <div
             key={task.id}
             className={cn(
