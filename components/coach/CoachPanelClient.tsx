@@ -108,7 +108,10 @@ export function CoachPanelClient({ coachId, coachName, initialStudents }: CoachP
   const [loadingDetail, setLoadingDetail] = useState(false);
 
   const [addingStudent, setAddingStudent] = useState(false);
-  const [studentEmail, setStudentEmail] = useState('');
+  const [unassignedStudents, setUnassignedStudents] = useState<Student[]>([]);
+  const [selectedUnassignedId, setSelectedUnassignedId] = useState<string>('');
+  const [unassignedSearch, setUnassignedSearch] = useState('');
+  const [loadingUnassigned, setLoadingUnassigned] = useState(false);
   const [savingStudent, setSavingStudent] = useState(false);
 
   const [addingTask, setAddingTask] = useState(false);
@@ -128,6 +131,30 @@ export function CoachPanelClient({ coachId, coachName, initialStudents }: CoachP
   const [deletingId, setDeletingId] = useState<string | null>(null);
 
   const [togglingId, setTogglingId] = useState<string | null>(null);
+
+  async function loadUnassignedStudents() {
+    setLoadingUnassigned(true);
+    try {
+      const { data } = await supabase
+        .from('profiles')
+        .select('id, full_name, email, coach_id')
+        .eq('role', 'student')
+        .is('coach_id', null)
+        .order('full_name', { ascending: true, nullsFirst: false });
+
+      const list: Student[] = (data ?? []).map((s: any) => ({
+        id: s.id,
+        full_name: s.full_name || 'İsimsiz Öğrenci',
+        email: s.email || '',
+        coach_id: s.coach_id,
+      }));
+      setUnassignedStudents(list);
+    } catch (err: any) {
+      toast.error('Bekleyen öğrenciler yüklenemedi', err?.message);
+    } finally {
+      setLoadingUnassigned(false);
+    }
+  }
 
   async function reloadStudents() {
     setLoadingStudents(true);
@@ -204,6 +231,15 @@ export function CoachPanelClient({ coachId, coachName, initialStudents }: CoachP
   }, [students, query]);
 
   const selectedStudent = students.find((s) => s.id === selectedId) ?? null;
+  const filteredUnassigned = useMemo(() => {
+    const q = unassignedSearch.trim().toLowerCase();
+    if (!q) return unassignedStudents;
+    return unassignedStudents.filter(
+      (s) =>
+        s.full_name.toLowerCase().includes(q) ||
+        (s.email || '').toLowerCase().includes(q)
+    );
+  }, [unassignedStudents, unassignedSearch]);
   const tytData = useMemo(() => toChartData(exams.filter((e) => e.exam_type === 'TYT')), [exams]);
   const aytData = useMemo(() => toChartData(exams.filter((e) => e.exam_type === 'AYT')), [exams]);
   const completedTasks = tasks.filter((t) => t.is_completed).length;
@@ -212,33 +248,15 @@ export function CoachPanelClient({ coachId, coachName, initialStudents }: CoachP
 
   async function handleAddStudent(e: React.FormEvent) {
     e.preventDefault();
-    const email = studentEmail.trim();
-    if (!email) {
-      toast.warning('Lütfen bir e-posta adresi girin');
+    if (!selectedUnassignedId) {
+      toast.warning('Lütfen listeden bir öğrenci seçin');
       return;
     }
     setSavingStudent(true);
     try {
-      const { data: target } = await supabase
-        .from('profiles')
-        .select('id, role, coach_id, full_name')
-        .eq('email', email)
-        .maybeSingle();
-
+      const target = unassignedStudents.find((s) => s.id === selectedUnassignedId);
       if (!target) {
-        toast.error('Bu e-posta ile kayıtlı kullanıcı bulunamadı');
-        return;
-      }
-      if (target.role !== 'student') {
-        toast.error('Bu kullanıcı öğrenci rolünde değil');
-        return;
-      }
-      if (target.coach_id && target.coach_id !== coachId) {
-        toast.warning('Bu öğrenci zaten başka bir koça atanmış');
-        return;
-      }
-      if (target.coach_id === coachId) {
-        toast.warning('Bu öğrenci zaten listenizde');
+        toast.error('Öğrenci bulunamadı');
         return;
       }
 
@@ -249,10 +267,14 @@ export function CoachPanelClient({ coachId, coachName, initialStudents }: CoachP
 
       if (error) throw error;
 
-      toast.success('Öğrenci başarıyla eklendi', target.full_name || email);
-      setStudentEmail('');
+      toast.success('Öğrenci başarıyla eklendi', target.full_name);
+      setSelectedUnassignedId('');
       setAddingStudent(false);
-      await reloadStudents();
+      setUnassignedSearch('');
+      await Promise.all([reloadStudents(), loadUnassignedStudents()]);
+      if (!selectedId) {
+        setSelectedId(target.id);
+      }
       router.refresh();
     } catch (err: any) {
       toast.error('Öğrenci eklenemedi', err?.message);
@@ -449,9 +471,14 @@ export function CoachPanelClient({ coachId, coachName, initialStudents }: CoachP
 
               <button
                 type="button"
-                onClick={() => {
-                  setAddingStudent((s) => !s);
-                  setStudentEmail('');
+                onClick={async () => {
+                  const next = !addingStudent;
+                  setAddingStudent(next);
+                  setSelectedUnassignedId('');
+                  setUnassignedSearch('');
+                  if (next) {
+                    await loadUnassignedStudents();
+                  }
                 }}
                 className={cn(
                   'w-full mb-3 inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold transition',
@@ -478,28 +505,85 @@ export function CoachPanelClient({ coachId, coachName, initialStudents }: CoachP
                   <div className="flex items-center gap-2">
                     <UserPlus className="w-4 h-4 text-sky-600" />
                     <h4 className="font-semibold text-sm text-slate-800">
-                      E-posta ile öğrenci ekle
+                      Listeden öğrenci seç
                     </h4>
                   </div>
                   <p className="text-xs text-slate-600 leading-relaxed">
-                    Sisteme kayıtlı olan öğrencinin e-posta adresini girin. Öğrencinin
-                    coach_id alanı sizin ID&apos;niz olarak güncellenecektir.
+                    Sisteme kayıtlı, rolü öğrenci olan ve henüz hiçbir koça atanmamış
+                    kullanıcılar aşağıda listelenir. Birini seçip &quot;Öğrenciyi Ekle&quot;ye basın.
                   </p>
+
                   <div className="relative">
-                    <Mail className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+                    <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
                     <input
-                      type="email"
-                      value={studentEmail}
-                      onChange={(e) => setStudentEmail(e.target.value)}
-                      placeholder="ogrenci@ornek.com"
+                      type="search"
+                      value={unassignedSearch}
+                      onChange={(e) => setUnassignedSearch(e.target.value)}
+                      placeholder="Listede ara..."
                       className="w-full rounded-xl border border-slate-200 bg-white pl-9 pr-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-sky-500/30 focus:border-sky-500 transition"
-                      autoFocus
                     />
                   </div>
+
+                  <div className="border border-slate-200 rounded-xl bg-white overflow-hidden">
+                    {loadingUnassigned ? (
+                      <div className="py-10">
+                        <div className="h-8 w-3/4 mx-auto bg-slate-100 rounded animate-pulse mb-2" />
+                        <div className="h-8 w-2/3 mx-auto bg-slate-100 rounded animate-pulse" />
+                      </div>
+                    ) : filteredUnassigned.length === 0 ? (
+                      <div className="py-8 px-3 text-center">
+                        <Users className="w-8 h-8 mx-auto text-slate-300 mb-2" />
+                        <p className="text-sm text-slate-500">
+                          {unassignedStudents.length === 0
+                            ? 'Bekleyen öğrenci yok'
+                            : 'Eşleşen öğrenci yok'}
+                        </p>
+                      </div>
+                    ) : (
+                      <ul className="max-h-64 overflow-y-auto divide-y divide-slate-100">
+                        {filteredUnassigned.map((s) => {
+                          const chosen = s.id === selectedUnassignedId;
+                          return (
+                            <li key={s.id}>
+                              <button
+                                type="button"
+                                onClick={() => setSelectedUnassignedId(s.id)}
+                                className={cn(
+                                  'w-full text-left flex items-center gap-3 px-3 py-2.5 transition',
+                                  chosen
+                                    ? 'bg-sky-100/70 ring-1 ring-sky-300'
+                                    : 'hover:bg-slate-50'
+                                )}
+                              >
+                                <div className="flex-shrink-0 w-8 h-8 rounded-lg bg-slate-100 text-slate-600 flex items-center justify-center text-xs font-bold">
+                                  {s.full_name
+                                    .split(' ')
+                                    .filter(Boolean)
+                                    .map((n) => n[0])
+                                    .slice(0, 2)
+                                    .join('') || '?'}
+                                </div>
+                                <div className="flex-1 min-w-0">
+                                  <p className="text-sm font-semibold text-slate-800 truncate">
+                                    {s.full_name}
+                                  </p>
+                                  <p className="text-xs text-slate-500 truncate">{s.email || '—'}</p>
+                                </div>
+                                {chosen && (
+                                  <CheckCircle2 className="w-4.5 h-4.5 text-sky-600 flex-shrink-0" />
+                                )}
+                              </button>
+                            </li>
+                          );
+                        })}
+                      </ul>
+                    )}
+                  </div>
+
                   <button
                     type="submit"
-                    disabled={savingStudent}
-                    className="w-full inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-sky-600 text-white font-semibold text-sm hover:bg-sky-700 disabled:opacity-60 transition"
+                    disabled={savingStudent || !selectedUnassignedId}
+                    className="w-full inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-sky-600 text-white font-semibold text-sm hover:bg-sky-700 disabled:opacity-60 disabled:cursor-not-allowed transition"
                   >
                     <Plus className="w-4 h-4" />
                     {savingStudent ? 'Ekleniyor...' : 'Öğrenciyi Ekle'}
