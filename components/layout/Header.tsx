@@ -97,8 +97,9 @@ export function Header({ user: propUser, profile: propProfile }: HeaderProps) {
       await supabase.auth.signOut();
     } catch {
     } finally {
-      router.push('/');
-      router.refresh();
+      if (typeof window !== 'undefined') {
+        window.location.href = '/';
+      }
       setSigningOut(false);
     }
   };

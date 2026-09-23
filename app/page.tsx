@@ -19,6 +19,7 @@ import {
   ShieldCheck,
   Users2,
   Handshake,
+  Phone,
 } from 'lucide-react';
 import { createClient } from '@/lib/supabase/server';
 import { redirect } from 'next/navigation';
@@ -378,6 +379,25 @@ export default async function HomePage() {
           </div>
         </div>
       </section>
+
+      {/* FOOTER */}
+      <footer className="border-t border-slate-200/80 bg-white/70 backdrop-blur-sm">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 py-6 sm:py-8">
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-6 text-sm text-gray-500">
+            <span className="font-medium tracking-wide">
+              Mustafa Siraç Nayki tarafından yapılmıştır.
+            </span>
+            <span className="hidden sm:inline text-slate-300">·</span>
+            <a
+              href="tel:+905015687636"
+              className="inline-flex items-center gap-2 text-sm text-gray-500 hover:text-emerald-600 transition-colors duration-200 font-medium"
+            >
+              <Phone className="w-4 h-4" />
+              +90 501 568 76 36
+            </a>
+          </div>
+        </div>
+      </footer>
     </div>
   );
 }

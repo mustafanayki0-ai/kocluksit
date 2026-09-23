@@ -21,22 +21,23 @@ export default async function DashboardRouterPage() {
 
     const { data: profile, error: profileError } = await supabase
       .from('profiles')
-      .select('id, role, coach_id')
+      .select('id, role, coach_id, full_name')
       .eq('id', user.id)
       .maybeSingle();
 
-    if (profileError || !profile) {
-      // Henüz profil oluşturulmadıysa (trigger beklemedeyse) öğrenci kabul et
+    if (profileError || !profile || !profile.role) {
       redirect('/dashboard/student');
     }
 
     if (profile.role === 'coach') {
       redirect('/dashboard/coach');
     }
-    // 'student' VEYA beklenmedik bir değer => öğrenci paneli
     redirect('/dashboard/student');
   } catch {
-    // Herhangi bir beklenmedik hata => güvenli yönlendirme login
-    redirect('/login');
+    try {
+      redirect('/dashboard/student');
+    } catch {
+      redirect('/');
+    }
   }
 }

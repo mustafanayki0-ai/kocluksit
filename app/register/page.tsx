@@ -2,7 +2,6 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
 import { Eye, EyeOff, Mail, Lock, User, Phone, ArrowRight, GraduationCap, CheckCircle2, UserRound, Briefcase, Sparkles } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
 import { Input, Select } from '@/components/ui/Input';
@@ -10,7 +9,6 @@ import { Button } from '@/components/ui/Button';
 import { Badge } from '@/components/ui/Badge';
 
 export default function RegisterPage() {
-  const router = useRouter();
   const supabase = createClient();
   const [form, setForm] = useState({
     fullName: '',
@@ -49,14 +47,15 @@ export default function RegisterPage() {
 
       if (signUpError) {
         setError(signUpError.message || 'Kayıt olunamadı, lütfen tekrar deneyin.');
+        setLoading(false);
         return;
       }
 
-      router.push('/dashboard');
-      router.refresh();
+      if (typeof window !== 'undefined') {
+        window.location.href = '/dashboard';
+      }
     } catch (err) {
       setError('Beklenmedik bir hata oluştu. Lütfen tekrar deneyin.');
-    } finally {
       setLoading(false);
     }
   }
