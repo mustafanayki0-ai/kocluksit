@@ -26,9 +26,6 @@ export default async function DashboardRouterPage() {
   if (role === 'coach') {
     redirect('/dashboard/coach');
   }
-  if (role === 'student') {
-    redirect('/dashboard/student');
-  }
 
-  redirect('/');
+  redirect('/dashboard/student');
 }

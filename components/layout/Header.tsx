@@ -115,8 +115,6 @@ export function Header({ user: propUser, profile: propProfile }: HeaderProps) {
 
   const studentLinks = [
     { href: '/dashboard/student', label: 'Panelim', icon: LayoutDashboard },
-    { href: '/dashboard/student/program', label: 'Programım', icon: FileText },
-    { href: '/dashboard/student/results', label: 'Denemelerim', icon: BarChart3 },
     { href: '/dashboard/student/tasks', label: 'Görevlerim', icon: ListTodo },
   ];
 
