@@ -4,40 +4,42 @@ import { redirect } from 'next/navigation';
 export const dynamic = 'force-dynamic';
 
 /**
- * ADIM 3: Dashboard KÖPRÜSÜ (Router)
- * Server Component, role değerini profiles tablosundan alır ve yönlendirir.
- * - role === 'coach'   -> /dashboard/coach
- * - role === 'student' -> /dashboard/student
- * - hiçbiri / hata     -> /login (auth kontrol)
+ * Dashboard Router (GÜVENLİ FALLBACK)
+ *
+ * - Kullanıcı auth OK ise profiles.role değerine göre yönlendirir.
+ * - ROLE NULL / UNDEFINED / SORGU HATASI / CATCH durumlarında:
+ *     KESİNLİKLE / veya /login GERİ GÖNDERME (redirect loop yaratır!).
+ *     Varsayılan olarak /dashboard/student fallback yönlendirmesi kullan.
  */
 export default async function DashboardRouterPage() {
   const supabase = createClient();
+  let user = null;
 
   try {
-    const { data: { user }, error: userError } = await supabase.auth.getUser();
-    if (userError || !user) {
-      redirect('/login');
-    }
+    const { data: { user: u } } = await supabase.auth.getUser();
+    user = u;
+  } catch {}
 
-    const { data: profile, error: profileError } = await supabase
-      .from('profiles')
-      .select('id, role, coach_id, full_name')
-      .eq('id', user.id)
-      .maybeSingle();
-
-    if (profileError || !profile || !profile.role) {
-      redirect('/dashboard/student');
-    }
-
-    if (profile.role === 'coach') {
-      redirect('/dashboard/coach');
-    }
-    redirect('/dashboard/student');
-  } catch {
-    try {
-      redirect('/dashboard/student');
-    } catch {
-      redirect('/');
-    }
+  if (!user) {
+    redirect('/login');
   }
+
+  let role: string | null = null;
+  try {
+    const { data } = await supabase
+      .from('profiles')
+      .select('role')
+      .eq('id', user!.id)
+      .maybeSingle();
+    role = data?.role ?? null;
+  } catch {
+    role = null;
+  }
+
+  if (role === 'coach') {
+    redirect('/dashboard/coach');
+  }
+
+  // student, null, undefined, beklenmedik değer, hata => hep öğrenci paneli fallback
+  redirect('/dashboard/student');
 }

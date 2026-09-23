@@ -3,7 +3,7 @@ import './globals.css';
 import { createClient } from '@/lib/supabase/server';
 import { Header } from '@/components/layout/Header';
 import { ToastProvider } from '@/components/ui/Toast';
-import { Mail, MapPin, BookOpen, BarChart3, Users } from 'lucide-react';
+import { Phone, MapPin, BookOpen, BarChart3, Users } from 'lucide-react';
 import { SigmaLogo } from '@/components/ui/SigmaLogo';
 
 export const metadata: Metadata = {
@@ -165,11 +165,18 @@ export default async function RootLayout({
                     platformu. Hedefine ulaşırken yalnız değilsin.
                   </p>
                   <div className="mt-5 flex items-center gap-2 text-xs text-slate-500">
-                    <Mail className="w-3.5 h-3.5" />
-                    iletisim@sigmamentorluk.com
+                    <a
+                      href="tel:+905015687636"
+                      className="inline-flex items-center gap-2 hover:text-emerald-600 transition-colors duration-200 font-medium"
+                    >
+                      <Phone className="w-3.5 h-3.5" />
+                      +90 501 568 76 36
+                    </a>
                     <span className="mx-2 text-slate-300">•</span>
-                    <MapPin className="w-3.5 h-3.5" />
-                    Türkiye
+                    <span className="inline-flex items-center gap-2">
+                      <MapPin className="w-3.5 h-3.5" />
+                      Türkiye
+                    </span>
                   </div>
                 </div>
 
@@ -203,7 +210,7 @@ export default async function RootLayout({
 
               <div className="flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-slate-500">
                 <p>
-                  © {new Date().getFullYear()} <span className="font-semibold text-slate-700">Sigma Mentörlük</span> — Tüm hakları saklıdır.
+                  © {new Date().getFullYear()} <span className="font-semibold text-slate-700">Sigma Mentörlük</span> — Tüm hakları saklıdır. | Mustafa Siraç Nayki tarafından yapılmıştır.
                 </p>
                 <p className="flex items-center gap-1.5">
                   <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-100 font-semibold">
