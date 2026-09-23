@@ -25,7 +25,7 @@ function prepareData(results: ExamResult[]) {
   return results
     .map((r) => ({
       date: new Date(r.exam_date).toLocaleDateString('tr-TR', { month: '2-digit', day: '2-digit' }),
-      net: Number(r.total_net),
+      net: Number((r as any).net_score ?? r.total_net ?? 0),
       label: `${r.exam_type} - ${new Date(r.exam_date).toLocaleDateString('tr-TR', { day: 'numeric', month: 'short' })}`,
     }))
     .sort((a, b) => {
@@ -65,7 +65,7 @@ function TrendBadge({ values }: { values: number[] }) {
     );
   }
   return (
-    <Badge variant="neutral" size="sm" className="gap-1.5">
+    <Badge variant="ink" size="sm" className="gap-1.5">
       <Minus className="w-3 h-3" />
       Sabit
     </Badge>

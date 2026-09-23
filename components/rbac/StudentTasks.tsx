@@ -37,7 +37,6 @@ type Editing = {
   title: string;
   description: string | null;
   task_date: string;
-  estimated_hours: number | null;
 } | null;
 
 export function StudentTasks({ studentId, coachId, tasks: initial, mode, loading, onMutation }: StudentTasksProps) {
@@ -55,7 +54,6 @@ export function StudentTasks({ studentId, coachId, tasks: initial, mode, loading
     title: '',
     description: '',
     task_date: new Date().toISOString().slice(0, 10),
-    estimated_hours: 1,
   });
 
   useMemo(() => {
@@ -76,7 +74,7 @@ export function StudentTasks({ studentId, coachId, tasks: initial, mode, loading
     setTogglingId(task.id);
     try {
       const { error } = await supabase
-        .from('daily_tasks')
+        .from('tasks')
         .update({ is_completed: target, updated_at: new Date().toISOString() })
         .eq('id', task.id);
       if (error) throw error;
@@ -109,17 +107,16 @@ export function StudentTasks({ studentId, coachId, tasks: initial, mode, loading
         title: newTask.title.trim(),
         description: newTask.description.trim() || null,
         task_date: newTask.task_date,
-        estimated_hours: Number(newTask.estimated_hours) || null,
         is_completed: false,
       };
       const { data, error } = await supabase
-        .from('daily_tasks')
+        .from('tasks')
         .insert(payload)
         .select()
         .single();
       if (error) throw error;
       setTasks((cur) => [data as DailyTask, ...cur]);
-      setNewTask({ title: '', description: '', task_date: new Date().toISOString().slice(0, 10), estimated_hours: 1 });
+      setNewTask({ title: '', description: '', task_date: new Date().toISOString().slice(0, 10) });
       setCreating(false);
       toast.success('Görev eklendi', data.title);
       if (onMutation) await onMutation();
@@ -136,7 +133,6 @@ export function StudentTasks({ studentId, coachId, tasks: initial, mode, loading
       title: t.title,
       description: t.description,
       task_date: t.task_date,
-      estimated_hours: t.estimated_hours,
     });
   };
 
@@ -148,12 +144,11 @@ export function StudentTasks({ studentId, coachId, tasks: initial, mode, loading
     setSubmitting(true);
     try {
       const { error } = await supabase
-        .from('daily_tasks')
+        .from('tasks')
         .update({
           title: editing.title.trim(),
           description: editing.description?.trim() || null,
           task_date: editing.task_date,
-          estimated_hours: Number(editing.estimated_hours) || null,
           updated_at: new Date().toISOString(),
         })
         .eq('id', editing.id);
@@ -166,7 +161,6 @@ export function StudentTasks({ studentId, coachId, tasks: initial, mode, loading
                 title: editing.title.trim(),
                 description: editing.description?.trim() || null,
                 task_date: editing.task_date,
-                estimated_hours: Number(editing.estimated_hours) || null,
               }
             : t
         )
@@ -184,7 +178,7 @@ export function StudentTasks({ studentId, coachId, tasks: initial, mode, loading
   const deleteTask = async (id: string, title: string) => {
     setDeletingId(id);
     try {
-      const { error } = await supabase.from('daily_tasks').delete().eq('id', id);
+      const { error } = await supabase.from('tasks').delete().eq('id', id);
       if (error) throw error;
       setTasks((cur) => cur.filter((t) => t.id !== id));
       toast.success('Görev silindi', title);
@@ -248,28 +242,15 @@ export function StudentTasks({ studentId, coachId, tasks: initial, mode, loading
                   placeholder="TYT Matematik - Türev konu tekrarı"
                 />
               </label>
-              <div className="grid grid-cols-2 gap-3">
-                <label className="block">
-                  <span className="text-xs font-semibold text-slate-600">Tarih</span>
-                  <input
-                    type="date"
-                    value={newTask.task_date}
-                    onChange={(e) => setNewTask((c) => ({ ...c, task_date: e.target.value }))}
-                    className="input mt-1.5"
-                  />
-                </label>
-                <label className="block">
-                  <span className="text-xs font-semibold text-slate-600">Tahmini Saat</span>
-                  <input
-                    type="number"
-                    min={0}
-                    step={0.5}
-                    value={newTask.estimated_hours}
-                    onChange={(e) => setNewTask((c) => ({ ...c, estimated_hours: Number(e.target.value) }))}
-                    className="input mt-1.5"
-                  />
-                </label>
-              </div>
+              <label className="block">
+                <span className="text-xs font-semibold text-slate-600">Tarih</span>
+                <input
+                  type="date"
+                  value={newTask.task_date}
+                  onChange={(e) => setNewTask((c) => ({ ...c, task_date: e.target.value }))}
+                  className="input mt-1.5"
+                />
+              </label>
             </div>
             <label className="block">
               <span className="text-xs font-semibold text-slate-600">Açıklama</span>
@@ -286,7 +267,7 @@ export function StudentTasks({ studentId, coachId, tasks: initial, mode, loading
                 size="sm"
                 type="button"
                 onClick={() =>
-                  setNewTask({ title: '', description: '', task_date: new Date().toISOString().slice(0, 10), estimated_hours: 1 })
+                  setNewTask({ title: '', description: '', task_date: new Date().toISOString().slice(0, 10) })
                 }
               >
                 Temizle
@@ -334,7 +315,7 @@ export function StudentTasks({ studentId, coachId, tasks: initial, mode, loading
                       >
                         {t.title}
                       </p>
-                      <Badge variant={t.is_completed ? 'success' : 'neutral'} size="sm" className="gap-1">
+                      <Badge variant={t.is_completed ? 'success' : 'ink'} size="sm" className="gap-1">
                         {t.is_completed ? (
                           <>
                             <CheckCircle2 className="w-3 h-3" /> Tamamlandı
@@ -356,9 +337,6 @@ export function StudentTasks({ studentId, coachId, tasks: initial, mode, loading
                         <Clock className="w-3 h-3" />
                         {formatDate(t.task_date)}
                       </span>
-                      {t.estimated_hours != null && (
-                        <span>Tahmini: {t.estimated_hours} sa</span>
-                      )}
                     </div>
                   </div>
                   {!isStudent && !isEditing && (
@@ -411,30 +389,15 @@ export function StudentTasks({ studentId, coachId, tasks: initial, mode, loading
                               className="input mt-1.5"
                             />
                           </label>
-                          <div className="grid grid-cols-2 gap-3">
-                            <label className="block">
-                              <span className="text-xs font-semibold text-slate-600">Tarih</span>
-                              <input
-                                type="date"
-                                value={editing.task_date}
-                                onChange={(e) => setEditing((c) => (c ? { ...c, task_date: e.target.value } : c))}
-                                className="input mt-1.5"
-                              />
-                            </label>
-                            <label className="block">
-                              <span className="text-xs font-semibold text-slate-600">Saat</span>
-                              <input
-                                type="number"
-                                min={0}
-                                step={0.5}
-                                value={editing.estimated_hours ?? 0}
-                                onChange={(e) =>
-                                  setEditing((c) => (c ? { ...c, estimated_hours: Number(e.target.value) } : c))
-                                }
-                                className="input mt-1.5"
-                              />
-                            </label>
-                          </div>
+                          <label className="block">
+                            <span className="text-xs font-semibold text-slate-600">Tarih</span>
+                            <input
+                              type="date"
+                              value={editing.task_date}
+                              onChange={(e) => setEditing((c) => (c ? { ...c, task_date: e.target.value } : c))}
+                              className="input mt-1.5"
+                            />
+                          </label>
                         </div>
                         <label className="block">
                           <span className="text-xs font-semibold text-slate-600">Açıklama</span>

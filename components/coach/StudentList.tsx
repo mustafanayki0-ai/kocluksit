@@ -69,8 +69,8 @@ export function StudentList({ students }: StudentListProps) {
     if (!query.trim()) return true;
     const q = query.toLowerCase();
     return (
-      s.full_name.toLowerCase().includes(q) ||
-      s.email.toLowerCase().includes(q) ||
+      (s.full_name ?? '').toLowerCase().includes(q) ||
+      (s.email ?? '').toLowerCase().includes(q) ||
       (s.target_department || '').toLowerCase().includes(q) ||
       (s.target_university || '').toLowerCase().includes(q)
     );
@@ -184,11 +184,12 @@ export function StudentList({ students }: StudentListProps) {
               <div className="flex items-start gap-4 flex-wrap md:flex-nowrap">
                 <div className="flex-shrink-0 w-14 h-14 rounded-2xl bg-gradient-to-br from-emerald-500/80 to-sky-500/80 border border-slate-200 flex items-center justify-center">
                   <span className="font-display font-bold text-xl text-white">
-                    {s.full_name
+                    {(s.full_name ?? '')
                       .split(' ')
+                      .filter(Boolean)
                       .map((n) => n[0])
                       .slice(0, 2)
-                      .join('')}
+                      .join('') || '?'}
                   </span>
                 </div>
                 <div className="flex-1 min-w-0 space-y-2.5">

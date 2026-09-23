@@ -48,13 +48,13 @@ export function getWeekDates(): { start: Date; end: Date } {
   return { start: monday, end: sunday };
 }
 
-export function getCountdownParts(targetDate: Date): {
+export function getCountdownParts(targetDate: Date, referenceDate?: Date): {
   days: number;
   hours: number;
   minutes: number;
   seconds: number;
 } {
-  const now = new Date().getTime();
+  const now = (referenceDate ?? new Date()).getTime();
   const target = targetDate.getTime();
   const diff = Math.max(0, target - now);
 

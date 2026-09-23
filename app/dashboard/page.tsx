@@ -3,27 +3,40 @@ import { redirect } from 'next/navigation';
 
 export const dynamic = 'force-dynamic';
 
-export default async function DashboardRootPage() {
+/**
+ * ADIM 3: Dashboard KÖPRÜSÜ (Router)
+ * Server Component, role değerini profiles tablosundan alır ve yönlendirir.
+ * - role === 'coach'   -> /dashboard/coach
+ * - role === 'student' -> /dashboard/student
+ * - hiçbiri / hata     -> /login (auth kontrol)
+ */
+export default async function DashboardRouterPage() {
   const supabase = createClient();
-  let role: 'coach' | 'student' | null = null;
 
   try {
     const { data: { user }, error: userError } = await supabase.auth.getUser();
     if (userError || !user) {
       redirect('/login');
     }
-    const { data: profile } = await supabase
+
+    const { data: profile, error: profileError } = await supabase
       .from('profiles')
-      .select('role')
+      .select('id, role, coach_id')
       .eq('id', user.id)
       .maybeSingle();
-    role = (profile?.role as 'coach' | 'student') || 'student';
+
+    if (profileError || !profile) {
+      // Henüz profil oluşturulmadıysa (trigger beklemedeyse) öğrenci kabul et
+      redirect('/dashboard/student');
+    }
+
+    if (profile.role === 'coach') {
+      redirect('/dashboard/coach');
+    }
+    // 'student' VEYA beklenmedik bir değer => öğrenci paneli
+    redirect('/dashboard/student');
   } catch {
+    // Herhangi bir beklenmedik hata => güvenli yönlendirme login
     redirect('/login');
   }
-
-  if (role === 'coach') {
-    redirect('/dashboard/coach');
-  }
-  redirect('/dashboard/student');
 }

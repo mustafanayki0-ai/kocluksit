@@ -20,7 +20,7 @@ import {
 } from 'lucide-react';
 
 interface Props {
-  student: Student & { coach_id: string };
+  student: Student;
   displayName: string;
   coachName: string;
   initialTasks: DailyTask[];
@@ -48,7 +48,7 @@ export function StudentDashboardClient({
     setLoading(true);
     try {
       const [{ data: t }, { data: e }, { data: m }] = await Promise.all([
-        supabase.from('daily_tasks').select('*').eq('student_id', student.id).order('task_date', { ascending: false }),
+        supabase.from('tasks').select('*').eq('student_id', student.id).order('task_date', { ascending: false }),
         supabase.from('exam_results').select('*').eq('student_id', student.id).order('exam_date', { ascending: false }),
         supabase.from('meetings').select('*').eq('student_id', student.id).order('meeting_date', { ascending: false }),
       ]);
@@ -78,7 +78,7 @@ export function StudentDashboardClient({
   const completedTasks = tasks.filter((t) => t.is_completed).length;
   const totalTasks = tasks.length;
   const avgNet = results.length
-    ? (results.reduce((s, r) => s + Number(r.total_net), 0) / results.length).toFixed(1)
+    ? (results.reduce((s, r) => s + Number(r.net_score ?? r.total_net ?? 0), 0) / results.length).toFixed(1)
     : '—';
 
   const nextMeeting = meetings

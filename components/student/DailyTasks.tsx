@@ -63,7 +63,8 @@ export function DailyTasks({ tasks: initial, studentId }: DailyTasksProps) {
       {
         id: `t_${Date.now()}`,
         student_id: studentId || 'local',
-        task_date: new Date().toISOString(),
+        coach_id: 'local_coach',
+        task_date: new Date().toISOString().slice(0, 10),
         title: newTitle.trim(),
         description: null,
         is_completed: false,

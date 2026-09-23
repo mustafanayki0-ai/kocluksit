@@ -67,13 +67,13 @@ export function CoachDashboardClient({
   const filteredStudents = useMemo(() => {
     const q = query.trim().toLowerCase();
     if (!q) return students;
-    return students.filter(
-      (s) =>
-        s.full_name.toLowerCase().includes(q) ||
-        s.email.toLowerCase().includes(q) ||
-        (s.target_department ?? '').toLowerCase().includes(q) ||
-        (s.target_university ?? '').toLowerCase().includes(q)
-    );
+    return students.filter((s) => {
+      const name = (s.full_name ?? '').toLowerCase();
+      const email = (s.email ?? '').toLowerCase();
+      const dept = (s.target_department ?? '').toLowerCase();
+      const uni = (s.target_university ?? '').toLowerCase();
+      return name.includes(q) || email.includes(q) || dept.includes(q) || uni.includes(q);
+    });
   }, [students, query]);
 
   const selected = useMemo(() => students.find((s) => s.id === selectedId) ?? null, [students, selectedId]);
@@ -84,7 +84,7 @@ export function CoachDashboardClient({
       setLoading(true);
       try {
         const [{ data: t }, { data: e }, { data: m }] = await Promise.all([
-          supabase.from('daily_tasks').select('*').eq('student_id', id).order('task_date', { ascending: false }),
+          supabase.from('tasks').select('*').eq('student_id', id).order('task_date', { ascending: false }),
           supabase.from('exam_results').select('*').eq('student_id', id).order('exam_date', { ascending: false }),
           supabase.from('meetings').select('*').eq('student_id', id).order('meeting_date', { ascending: false }),
         ]);
@@ -108,12 +108,22 @@ export function CoachDashboardClient({
   const refreshStudents = useCallback(async () => {
     setLoading(true);
     try {
-      const { data: s } = await supabase
-        .from('students')
-        .select('*')
+      const { data: s, error } = await supabase
+        .from('profiles')
+        .select('id, full_name, role, coach_id, created_at, updated_at')
         .eq('coach_id', coachId)
-        .order('full_name', { ascending: true });
-      const next = (s as Student[]) ?? [];
+        .eq('role', 'student')
+        .order('full_name', { ascending: true, nullsFirst: false });
+
+      if (error) throw error;
+
+      const next = ((s ?? []).map((row) => ({
+        ...row,
+        full_name: row.full_name ?? 'İsimsiz Öğrenci',
+        email: '',
+        role: 'student' as const,
+      })) as unknown) as Student[];
+
       setStudents(next);
       if (next.length === 0) {
         setSelectedId(null);
@@ -152,7 +162,7 @@ export function CoachDashboardClient({
         ? (
             students.reduce((sum, s) => {
               const r = dataMap[s.id]?.results ?? [];
-              return sum + r.reduce((ss, x) => ss + Number(x.total_net), 0);
+              return sum + r.reduce((ss, x) => ss + Number(x.net_score ?? x.total_net ?? 0), 0);
             }, 0) / totalExams
           ).toFixed(1)
         : '—';
@@ -327,10 +337,12 @@ export function CoachDashboardClient({
                                   )}
                                 />
                               </div>
-                              <p className="text-[11px] text-slate-500 mt-0.5 flex items-center gap-1 truncate">
-                                <Mail className="w-3 h-3 flex-shrink-0" />
-                                <span className="truncate">{s.email}</span>
-                              </p>
+                              {s.email && (
+                                <p className="text-[11px] text-slate-500 mt-0.5 flex items-center gap-1 truncate">
+                                  <Mail className="w-3 h-3 flex-shrink-0" />
+                                  <span className="truncate">{s.email}</span>
+                                </p>
+                              )}
                               {s.target_department && (
                                 <p className="text-[11px] text-slate-500 mt-0.5 flex items-center gap-1 truncate">
                                   <GraduationCap className="w-3 h-3 flex-shrink-0" />
@@ -405,9 +417,11 @@ export function CoachDashboardClient({
                             {selected.full_name}
                           </h2>
                           <div className="mt-1 flex flex-wrap items-center gap-x-4 gap-y-1.5 text-xs text-slate-500">
-                            <span className="inline-flex items-center gap-1">
-                              <Mail className="w-3.5 h-3.5" /> {selected.email}
-                            </span>
+                            {selected.email && (
+                              <span className="inline-flex items-center gap-1">
+                                <Mail className="w-3.5 h-3.5" /> {selected.email}
+                              </span>
+                            )}
                             {selected.phone && (
                               <span className="inline-flex items-center gap-1">
                                 <Phone className="w-3.5 h-3.5" /> {selected.phone}

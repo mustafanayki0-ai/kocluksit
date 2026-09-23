@@ -29,16 +29,19 @@ function prepareChartData(results: ExamResult[]): ExamChartData[] {
     .sort(
       (a, b) => new Date(a.exam_date).getTime() - new Date(b.exam_date).getTime()
     )
-    .map((r) => ({
-      date: new Date(r.exam_date).toLocaleDateString('tr-TR', {
-        day: '2-digit',
-        month: 'short',
-      }),
-      net: Number(r.total_net),
-      turkish: r.turkish_net ? Number(r.turkish_net) : undefined,
-      math: r.math_net ? Number(r.math_net) : undefined,
-      label: `${r.total_net.toFixed(1)} net`,
-    }));
+    .map((r) => {
+      const net = Number(r.net_score ?? r.total_net ?? 0);
+      return {
+        date: new Date(r.exam_date).toLocaleDateString('tr-TR', {
+          day: '2-digit',
+          month: 'short',
+        }),
+        net,
+        turkish: r.turkish_net ? Number(r.turkish_net) : undefined,
+        math: r.math_net ? Number(r.math_net) : undefined,
+        label: `${net.toFixed(1)} net`,
+      };
+    });
 }
 
 function calculateTrend(data: ExamChartData[]) {

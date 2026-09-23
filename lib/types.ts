@@ -6,24 +6,21 @@ export type ExamType = 'TYT' | 'AYT';
 
 export interface Profile {
   id: string;
-  full_name: string;
+  full_name: string | null;
   role: UserRole;
+  coach_id: string | null;
   created_at: string;
   updated_at: string;
+  email?: string;
+  phone?: string | null;
+  target_university?: string | null;
+  target_department?: string | null;
 }
 
-export interface Student {
-  id: string;
-  coach_id: string;
-  user_id: string | null;
-  full_name: string;
-  email: string;
-  phone: string | null;
-  target_university: string | null;
-  target_department: string | null;
-  created_at: string;
-  updated_at: string;
-}
+export type Student = Profile & {
+  role: 'student';
+  coach_id: string | null;
+};
 
 export interface WeeklyProgram {
   id: string;
@@ -45,7 +42,7 @@ export interface Meeting {
   duration_minutes: number;
   meeting_url: string | null;
   notes: string | null;
-  status: MeetingStatus;
+  status?: MeetingStatus;
   created_at: string;
   updated_at: string;
 }
@@ -53,19 +50,21 @@ export interface Meeting {
 export interface ExamResult {
   id: string;
   student_id: string;
+  coach_id?: string | null;
   exam_type: ExamType;
   exam_date: string;
-  total_net: number;
-  turkish_net: number | null;
-  math_net: number | null;
-  physics_net: number | null;
-  chemistry_net: number | null;
-  biology_net: number | null;
-  history_net: number | null;
-  geography_net: number | null;
-  philosophy_net: number | null;
-  religion_net: number | null;
-  rank: number | null;
+  net_score: number;
+  total_net?: number;
+  turkish_net?: number | null;
+  math_net?: number | null;
+  physics_net?: number | null;
+  chemistry_net?: number | null;
+  biology_net?: number | null;
+  history_net?: number | null;
+  geography_net?: number | null;
+  philosophy_net?: number | null;
+  religion_net?: number | null;
+  rank?: number | null;
   created_at: string;
   updated_at: string;
 }
@@ -73,11 +72,12 @@ export interface ExamResult {
 export interface DailyTask {
   id: string;
   student_id: string;
+  coach_id: string;
   task_date: string;
   title: string;
   description: string | null;
   is_completed: boolean;
-  estimated_hours: number | null;
+  estimated_hours?: number | null;
   created_at: string;
   updated_at: string;
 }

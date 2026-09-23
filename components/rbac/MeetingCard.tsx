@@ -33,7 +33,7 @@ function Countdown({ date }: { date: string }) {
     const t = setInterval(() => setNow(Date.now()), 1000);
     return () => clearInterval(t);
   }, []);
-  const parts = getCountdownParts(date, new Date(now).toISOString());
+  const parts = getCountdownParts(new Date(date), new Date(now));
   return (
     <div className="flex items-center gap-2 flex-wrap">
       {[
@@ -121,7 +121,6 @@ export function MeetingCard({ studentId, coachId, meetings, mode, loading, onMut
           duration_minutes: Number(form.duration_minutes) || 60,
           meeting_url: form.meeting_url.trim() || null,
           notes: form.notes.trim() || null,
-          status: 'scheduled',
         });
         if (error) throw error;
         toast.success('Görüşme planlandı', formatDateTime(new Date(form.meeting_date).toISOString()));
@@ -256,7 +255,7 @@ export function MeetingCard({ studentId, coachId, meetings, mode, loading, onMut
                 </p>
                 <p className="mt-2 inline-flex items-center gap-1.5 text-xs text-slate-500">
                   <Clock className="w-3 h-3" />
-                  {nextMeeting.duration_minutes} dakika · {nextMeeting.status === 'scheduled' ? 'Planlandı' : nextMeeting.status}
+                  {nextMeeting.duration_minutes} dakika · {(nextMeeting.status ?? 'scheduled') === 'scheduled' ? 'Planlandı' : (nextMeeting.status ?? 'Planlandı')}
                 </p>
               </div>
               <div className="rounded-xl bg-gradient-to-br from-orange-50 to-amber-50 border border-orange-100 p-5 flex flex-col items-start">

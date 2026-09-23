@@ -23,11 +23,12 @@ export function ExamAddForm({ studentId, onAdded, mode = 'student' }: ExamAddFor
     exam_type: 'TYT' as ExamType,
     exam_date: new Date().toISOString().slice(0, 10),
     total_net: '',
+    net_score: '',
   });
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
-    const net = Number(form.total_net);
+    const net = Number(form.net_score || form.total_net);
     if (!form.exam_date || Number.isNaN(net) || net < 0) {
       toast.warning('Lütfen geçerli bir tarih ve net sayısı gir');
       return;
@@ -38,11 +39,12 @@ export function ExamAddForm({ studentId, onAdded, mode = 'student' }: ExamAddFor
         student_id: studentId,
         exam_type: form.exam_type,
         exam_date: form.exam_date,
+        net_score: net,
         total_net: net,
       });
       if (error) throw error;
       toast.success('Deneme sonucu kaydedildi', `${form.exam_type} · ${net.toFixed(2)} net`);
-      setForm({ exam_type: 'TYT', exam_date: new Date().toISOString().slice(0, 10), total_net: '' });
+      setForm({ exam_type: 'TYT', exam_date: new Date().toISOString().slice(0, 10), total_net: '', net_score: '' });
       await onAdded();
     } catch (err: any) {
       toast.error('Deneme eklenemedi', err?.message);
@@ -102,10 +104,11 @@ export function ExamAddForm({ studentId, onAdded, mode = 'student' }: ExamAddFor
               inputMode="decimal"
               min={0}
               step={0.01}
-              value={form.total_net}
-              onChange={(e) => setForm((f) => ({ ...f, total_net: e.target.value }))}
+              value={form.net_score || form.total_net}
+              onChange={(e) => setForm((f) => ({ ...f, net_score: e.target.value, total_net: e.target.value }))}
               placeholder="örn. 95.25"
               className="input mt-1.5"
+              name="net_score"
             />
           </label>
           <Button type="submit" loading={submitting} size="md" className="sm:h-[42px] gap-1.5 w-full">
