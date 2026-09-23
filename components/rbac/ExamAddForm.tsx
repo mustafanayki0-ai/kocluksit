@@ -26,11 +26,17 @@ export function ExamAddForm({ studentId, onAdded, mode = 'student' }: ExamAddFor
     net_score: '',
   });
 
+  const maxNet = form.exam_type === 'TYT' ? 120 : 80;
+
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
     const net = Number(form.net_score || form.total_net);
     if (!form.exam_date || Number.isNaN(net) || net < 0) {
       toast.warning('Lütfen geçerli bir tarih ve net sayısı gir');
+      return;
+    }
+    if (net > maxNet) {
+      toast.warning(`${form.exam_type} için maksimum net ${maxNet} olabilir`);
       return;
     }
     setSubmitting(true);
@@ -40,7 +46,6 @@ export function ExamAddForm({ studentId, onAdded, mode = 'student' }: ExamAddFor
         exam_type: form.exam_type,
         exam_date: form.exam_date,
         net_score: net,
-        total_net: net,
       });
       if (error) throw error;
       toast.success('Deneme sonucu kaydedildi', `${form.exam_type} · ${net.toFixed(2)} net`);
@@ -98,15 +103,16 @@ export function ExamAddForm({ studentId, onAdded, mode = 'student' }: ExamAddFor
             />
           </label>
           <label className="block">
-            <span className="text-xs font-semibold text-slate-600">Toplam Net</span>
+            <span className="text-xs font-semibold text-slate-600">Toplam Net (Maks. {maxNet})</span>
             <input
               type="number"
               inputMode="decimal"
               min={0}
+              max={maxNet}
               step={0.01}
               value={form.net_score || form.total_net}
               onChange={(e) => setForm((f) => ({ ...f, net_score: e.target.value, total_net: e.target.value }))}
-              placeholder="örn. 95.25"
+              placeholder={`örn. ${maxNet - 20}`}
               className="input mt-1.5"
               name="net_score"
             />

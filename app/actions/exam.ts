@@ -15,6 +15,9 @@ export async function addExamResult(formData: FormData) {
   const net = Number(netRaw);
   if (Number.isNaN(net) || net < 0) return { ok: false, error: 'Net sayısı geçersiz' };
 
+  const maxNet = examType === 'TYT' ? 120 : 80;
+  if (net > maxNet) return { ok: false, error: `${examType} için maksimum net ${maxNet} olabilir` };
+
   const supabase = createClient();
   try {
     const { data: { user } } = await supabase.auth.getUser();
@@ -24,18 +27,15 @@ export async function addExamResult(formData: FormData) {
     if (!me) return { ok: false, error: 'Profil bulunamadı' };
 
     let targetStudentId: string;
-    let coachId: string | null = null;
 
     if (me.role === 'student') {
       if (studentId && studentId !== user.id) return { ok: false, error: 'Kendiniz için ekleyebilirsiniz' };
       targetStudentId = user.id;
     } else if (me.role === 'coach') {
       if (!studentId) return { ok: false, error: 'Öğrenci seçmelisiniz' };
-      // Öğrenci bu koçun altında mı?
       const { data: student } = await supabase.from('profiles').select('id, coach_id').eq('id', studentId).maybeSingle();
       if (!student || student.coach_id !== user.id) return { ok: false, error: 'Bu öğrenci size ait değil' };
       targetStudentId = studentId;
-      coachId = user.id;
     } else {
       return { ok: false, error: 'Rol tanınmadı' };
     }
@@ -46,7 +46,6 @@ export async function addExamResult(formData: FormData) {
       exam_date: examDate,
       net_score: net,
     };
-    if (coachId) payload.coach_id = coachId;
 
     const { error } = await supabase.from('exam_results').insert(payload);
     if (error) return { ok: false, error: error.message };

@@ -3,16 +3,12 @@
 import { useState } from 'react';
 import { Card, CardBody, CardHeader } from '@/components/ui/Card';
 import { Badge } from '@/components/ui/Badge';
-import { Button } from '@/components/ui/Button';
 import { Checkbox } from '@/components/ui/Checkbox';
-import { Input } from '@/components/ui/Input';
 import {
   ListTodo,
-  Plus,
   Clock,
   CheckCircle2,
   Flame,
-  Trash2,
   GripVertical,
 } from 'lucide-react';
 import type { DailyTask } from '@/lib/types';
@@ -23,10 +19,8 @@ interface DailyTasksProps {
   studentId?: string;
 }
 
-export function DailyTasks({ tasks: initial, studentId }: DailyTasksProps) {
+export function DailyTasks({ tasks: initial }: DailyTasksProps) {
   const [tasks, setTasks] = useState<DailyTask[]>(initial ?? []);
-  const [newTitle, setNewTitle] = useState('');
-  const [adding, setAdding] = useState(false);
   const [loading, setLoading] = useState<string | null>(null);
 
   const completedCount = tasks.filter((t) => t.is_completed).length;
@@ -51,32 +45,6 @@ export function DailyTasks({ tasks: initial, studentId }: DailyTasksProps) {
     setTimeout(() => setLoading(null), 300);
   };
 
-  const deleteTask = (id: string) => {
-    setTasks((prev) => prev.filter((t) => t.id !== id));
-  };
-
-  const addTask = () => {
-    if (!newTitle.trim()) return;
-    const now = new Date().toISOString();
-    setTasks((prev) => [
-      ...prev,
-      {
-        id: `t_${Date.now()}`,
-        student_id: studentId || 'local',
-        coach_id: 'local_coach',
-        task_date: new Date().toISOString().slice(0, 10),
-        title: newTitle.trim(),
-        description: null,
-        is_completed: false,
-        estimated_hours: 1,
-        created_at: now,
-        updated_at: now,
-      },
-    ]);
-    setNewTitle('');
-    setAdding(false);
-  };
-
   return (
     <Card className="relative overflow-hidden">
       <div className="absolute -top-20 -right-20 w-64 h-64 rounded-full bg-emerald-500/5 blur-3xl" />
@@ -95,6 +63,9 @@ export function DailyTasks({ tasks: initial, studentId }: DailyTasksProps) {
               <h3 className="font-display text-xl font-bold">
                 Günlük <span className="gradient-text">Görevlerin</span>
               </h3>
+              <p className="text-xs text-slate-500 mt-1">
+                Sadece tamamlandı olarak işaretleyebilirsin.
+              </p>
             </div>
           </div>
           <div className="flex items-center gap-2 flex-wrap">
@@ -135,7 +106,9 @@ export function DailyTasks({ tasks: initial, studentId }: DailyTasksProps) {
       <CardBody className="space-y-2.5">
         {tasks.length === 0 && (
           <div className="rounded-xl border border-dashed border-slate-300 p-8 text-center">
-            <p className="text-slate-500">Bugün için henüz görev eklenmemiş.</p>
+            <ListTodo className="w-12 h-12 mx-auto text-slate-300 mb-3" />
+            <p className="font-semibold text-slate-700">Bugün için henüz görev atanmamış</p>
+            <p className="text-sm text-slate-500 mt-1">Koçun sana görev atadığında burada listelenecek.</p>
           </div>
         )}
 
@@ -150,7 +123,7 @@ export function DailyTasks({ tasks: initial, studentId }: DailyTasksProps) {
             )}
           >
             <div className="flex items-start gap-3">
-              <div className="mt-0.5 opacity-30 group-hover:opacity-100 transition-opacity cursor-grab">
+              <div className="mt-0.5 opacity-30 group-hover:opacity-100 transition-opacity">
                 <GripVertical className="w-4 h-4 text-slate-400" />
               </div>
               <div className="flex-1 min-w-0">
@@ -181,58 +154,10 @@ export function DailyTasks({ tasks: initial, studentId }: DailyTasksProps) {
                     {task.estimated_hours} sa
                   </div>
                 )}
-                <button
-                  onClick={() => deleteTask(task.id)}
-                  className="p-1.5 rounded-lg text-slate-400 hover:text-orange-600 hover:bg-orange-50 opacity-0 group-hover:opacity-100 transition-all"
-                  title="Görevi sil"
-                >
-                  <Trash2 className="w-4 h-4" />
-                </button>
               </div>
             </div>
           </div>
         ))}
-
-        {adding ? (
-          <div className="rounded-xl border border-emerald-200 bg-emerald-50/50 p-3 space-y-2">
-            <Input
-              placeholder="Yeni görev ekle..."
-              value={newTitle}
-              onChange={(e) => setNewTitle(e.target.value)}
-              autoFocus
-              onKeyDown={(e) => {
-                if (e.key === 'Enter') addTask();
-                if (e.key === 'Escape') {
-                  setAdding(false);
-                  setNewTitle('');
-                }
-              }}
-            />
-            <div className="flex items-center gap-2 justify-end">
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => {
-                  setAdding(false);
-                  setNewTitle('');
-                }}
-              >
-                İptal
-              </Button>
-              <Button size="sm" onClick={addTask}>
-                <Plus className="w-4 h-4" /> Ekle
-              </Button>
-            </div>
-          </div>
-        ) : (
-          <button
-            onClick={() => setAdding(true)}
-            className="w-full p-3.5 rounded-xl border-2 border-dashed border-slate-300 hover:border-emerald-400/50 hover:bg-emerald-50/30 transition-all duration-200 flex items-center justify-center gap-2 text-sm text-slate-500 hover:text-emerald-700 font-medium"
-          >
-            <Plus className="w-4 h-4" />
-            Yeni görev ekle
-          </button>
-        )}
       </CardBody>
     </Card>
   );

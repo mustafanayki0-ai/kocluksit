@@ -75,6 +75,7 @@ export default function StudentDashboardPage() {
 
   const [loading, setLoading] = useState(true);
   const [userName, setUserName] = useState('Öğrenci');
+  const [userRole, setUserRole] = useState<string>('Öğrenci');
   const [userId, setUserId] = useState<string | null>(null);
 
   const [tasks, setTasks] = useState<Task[]>([]);
@@ -102,6 +103,7 @@ export default function StudentDashboardPage() {
         .eq('id', user.id)
         .maybeSingle();
       setUserName(profile?.full_name || user.email?.split('@')[0] || 'Öğrenci');
+      setUserRole(profile?.role === 'coach' ? 'Koç' : 'Öğrenci');
 
       const [{ data: t }, { data: e }] = await Promise.all([
         supabase
@@ -154,20 +156,29 @@ export default function StudentDashboardPage() {
     e.preventDefault();
     if (!userId) return;
     const net = Number(examNet);
+    const maxNet = examType === 'TYT' ? 120 : 80;
     if (!examDate || isNaN(net) || net < 0) {
       toast.error('Lütfen geçerli bir tarih ve net girin');
       return;
     }
+    if (net > maxNet) {
+      toast.error(`${examType} için maksimum net ${maxNet} olabilir`);
+      return;
+    }
     setSavingExam(true);
     try {
-      const { error } = await supabase.from('exam_results').insert([
-        {
-          student_id: userId,
-          exam_type: examType,
-          exam_date: examDate,
-          net_score: net,
-        },
-      ]);
+      const payload: {
+        student_id: string;
+        exam_type: 'TYT' | 'AYT';
+        exam_date: string;
+        net_score: number;
+      } = {
+        student_id: userId,
+        exam_type: examType,
+        exam_date: examDate,
+        net_score: net,
+      };
+      const { error } = await supabase.from('exam_results').insert([payload]);
       if (error) throw error;
       toast.success('Deneme başarıyla eklendi');
       setExamNet('');
@@ -214,7 +225,7 @@ export default function StudentDashboardPage() {
               </div>
               <div>
                 <p className="font-bold text-slate-900 leading-tight">{userName}</p>
-                <p className="text-xs text-slate-500 mt-0.5">Öğrenci</p>
+                <p className="text-xs text-slate-500 mt-0.5">{userRole}</p>
               </div>
             </div>
           </div>
@@ -277,7 +288,8 @@ export default function StudentDashboardPage() {
                 type="number"
                 step="0.1"
                 min="0"
-                placeholder="örn. 85.5"
+                max={examType === 'TYT' ? 120 : 80}
+                placeholder={`Maks. ${examType === 'TYT' ? 120 : 80} net`}
                 value={examNet}
                 onChange={(e) => setExamNet(e.target.value)}
                 required
