@@ -87,7 +87,7 @@ export default function RegisterPage() {
               Yolculuğa şimdi katıl.
             </h1>
             <p className="text-white/85 text-lg max-w-md leading-relaxed">
-              Öğrenci hesabı oluştur, koçluk deneyimine dahil ol ve hedeflerine bir adım daha yaklaş.
+              YKS yolculuğunda hedefine ulaşmak için hemen aramıza katıl.
             </p>
 
             <ul className="space-y-3.5 max-w-md">
