@@ -35,6 +35,21 @@ export function formatDateTime(date: string | Date): string {
   return `${formatDate(date)} ${formatTime(date)}`;
 }
 
+export function formatDateTimeRange(date: string | Date, minutes: number): string {
+  const start = new Date(date instanceof Date ? date.toISOString() : date);
+  const end = new Date(start.getTime() + Math.max(0, minutes) * 60 * 1000);
+  const sameDay = start.toDateString() === end.toDateString();
+  if (sameDay) {
+    return `${formatDate(start)} ${formatTime(start)} – ${formatTime(end)}`;
+  }
+  return `${formatDateTime(start)} – ${formatDateTime(end)}`;
+}
+
+export function minutesUntil(meetingDate: string | Date, now: Date = new Date()): number {
+  const t = new Date(meetingDate instanceof Date ? meetingDate.toISOString() : meetingDate).getTime();
+  return Math.round((t - now.getTime()) / 60000);
+}
+
 export function getWeekDates(): { start: Date; end: Date } {
   const now = new Date();
   const day = now.getDay();

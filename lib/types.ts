@@ -38,6 +38,7 @@ export interface Meeting {
   id: string;
   student_id: string;
   coach_id: string;
+  title?: string | null;
   meeting_date: string;
   duration_minutes: number;
   meeting_url: string | null;

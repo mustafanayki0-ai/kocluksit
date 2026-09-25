@@ -26,6 +26,10 @@ import {
 } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
 import { useToast } from '@/components/ui/Toast';
+import { MeetingCard } from '@/components/rbac/MeetingCard';
+import { MeetingCountdown } from '@/components/student/MeetingCountdown';
+import { useMeetingNotifications } from '@/hooks/useMeetingNotifications';
+import type { Meeting } from '@/lib/types';
 
 type Task = {
   id: string;
@@ -81,6 +85,7 @@ export function StudentPanelClient({ userId }: StudentPanelClientProps) {
 
   const [tasks, setTasks] = useState<Task[]>([]);
   const [exams, setExams] = useState<Exam[]>([]);
+  const [meetings, setMeetings] = useState<Meeting[]>([]);
   const [togglingId, setTogglingId] = useState<string | null>(null);
 
   const [examDate, setExamDate] = useState(() => new Date().toISOString().slice(0, 10));
@@ -99,7 +104,7 @@ export function StudentPanelClient({ userId }: StudentPanelClientProps) {
       setUserName(profile?.full_name || 'Öğrenci');
       setUserRole(profile?.role === 'coach' ? 'Koç' : 'Öğrenci');
 
-      const [{ data: t }, { data: e }] = await Promise.all([
+      const [{ data: t }, { data: e }, { data: m }] = await Promise.all([
         supabase
           .from('tasks')
           .select('id, title, description, task_date, is_completed, created_at')
@@ -110,9 +115,15 @@ export function StudentPanelClient({ userId }: StudentPanelClientProps) {
           .select('id, exam_type, exam_date, net_score')
           .eq('student_id', userId)
           .order('exam_date', { ascending: false }),
+        supabase
+          .from('meetings')
+          .select('id, student_id, coach_id, title, meeting_date, duration_minutes, meeting_url, notes, status, created_at, updated_at')
+          .eq('student_id', userId)
+          .order('meeting_date', { ascending: false }),
       ]);
       setTasks((t as Task[]) ?? []);
       setExams((e as Exam[]) ?? []);
+      setMeetings((m as Meeting[]) ?? []);
     } catch (err: any) {
       toast.error('Veriler yüklenemedi', err?.message);
     } finally {
@@ -186,6 +197,20 @@ export function StudentPanelClient({ userId }: StudentPanelClientProps) {
   const avg = exams.length
     ? (exams.reduce((s, r) => s + Number(r.net_score ?? 0), 0) / exams.length).toFixed(1)
     : '—';
+  const nextMeeting = useMemo(() => {
+    const now = Date.now();
+    return [...meetings]
+      .filter((m) => new Date(m.meeting_date).getTime() >= now - 6 * 60 * 60 * 1000)
+      .sort((a, b) => new Date(a.meeting_date).getTime() - new Date(b.meeting_date).getTime())[0] ?? null;
+  }, [meetings]);
+  const nextMeetingCount = meetings.filter((m) => new Date(m.meeting_date).getTime() >= Date.now() - 6 * 60 * 60 * 1000).length;
+
+  useMeetingNotifications({
+    userId,
+    mode: 'student',
+    enabled: true,
+    requestPermission: true,
+  });
 
   return (
     <div className="min-h-[calc(100vh-4rem)] bg-gradient-to-b from-slate-50 via-white to-slate-50 py-8 px-4 sm:px-6">
@@ -216,12 +241,13 @@ export function StudentPanelClient({ userId }: StudentPanelClientProps) {
               </div>
             </div>
           </div>
-          <div className="relative mt-6 grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4">
+          <div className="relative mt-6 grid grid-cols-2 md:grid-cols-5 gap-3 sm:gap-4">
             {[
               { label: 'Toplam Görev', value: tasks.length, icon: ListTodo, tone: 'from-sky-500 to-sky-600' },
               { label: 'Tamamlanan', value: completed, icon: CheckCircle2, tone: 'from-emerald-500 to-emerald-600' },
               { label: 'Deneme Sayısı', value: exams.length, icon: BarChart3, tone: 'from-orange-500 to-orange-600' },
               { label: 'Ortalama Net', value: avg, icon: Award, tone: 'from-indigo-500 to-violet-600' },
+              { label: 'Görüşmeler', value: nextMeetingCount, icon: CalendarDays, tone: 'from-rose-500 to-pink-600' },
             ].map((s, i) => (
               <div key={i} className="rounded-2xl border border-slate-200 bg-white p-4 flex items-start gap-3">
                 <div className={`w-10 h-10 rounded-xl bg-gradient-to-br ${s.tone} text-white flex items-center justify-center flex-shrink-0`}>
@@ -235,6 +261,9 @@ export function StudentPanelClient({ userId }: StudentPanelClientProps) {
             ))}
           </div>
         </section>
+
+        {/* SIRADAKİ GÖRÜŞME GERİ SAYIM */}
+        <MeetingCountdown meeting={nextMeeting ?? undefined} />
 
         {/* DENEME EKLEME FORMU */}
         <section className="rounded-3xl border border-slate-200 bg-white p-5 sm:p-6 shadow-sm">
@@ -453,6 +482,15 @@ export function StudentPanelClient({ userId }: StudentPanelClientProps) {
             </div>
           </section>
         </div>
+
+        {/* YAKLAŞAN GÖRÜŞMELER (Öğrenci görünümü) */}
+        <MeetingCard
+          meetings={meetings}
+          mode="student"
+          studentId={userId}
+          loading={loading}
+          onMutation={loadAll}
+        />
       </div>
     </div>
   );

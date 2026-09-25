@@ -10,6 +10,7 @@ import { ExamLineChart } from '@/components/rbac/ExamLineChart';
 import { StudentTasks } from '@/components/rbac/StudentTasks';
 import { ExamAddForm } from '@/components/rbac/ExamAddForm';
 import { MeetingCard } from '@/components/rbac/MeetingCard';
+import { useMeetingNotifications } from '@/hooks/useMeetingNotifications';
 import { createClient } from '@/lib/supabase/client';
 import type { DailyTask, ExamResult, Meeting, Student } from '@/lib/types';
 import {
@@ -57,6 +58,13 @@ export function CoachDashboardClient({
 }: Props) {
   const supabase = createClient();
   const toast = useToast();
+
+  useMeetingNotifications({
+    userId: coachId,
+    mode: 'coach',
+    enabled: true,
+    requestPermission: true,
+  });
 
   const [students, setStudents] = useState<Student[]>(initialStudents ?? []);
   const [dataMap, setDataMap] = useState<DataMap>(initialDataMap ?? {});

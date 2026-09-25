@@ -35,6 +35,9 @@ import {
 import { createClient } from '@/lib/supabase/client';
 import { useToast } from '@/components/ui/Toast';
 import { cn, buildRollingWindow, type RollingDay, isSameIsoDay } from '@/lib/utils';
+import { MeetingCard } from '@/components/rbac/MeetingCard';
+import { useMeetingNotifications } from '@/hooks/useMeetingNotifications';
+import type { Meeting } from '@/lib/types';
 
 type Student = {
   id: string;
@@ -100,6 +103,13 @@ export function CoachPanelClient({ coachId, coachName, initialStudents }: CoachP
   const supabase = createClient();
   const toast = useToast();
 
+  useMeetingNotifications({
+    userId: coachId,
+    mode: 'coach',
+    enabled: true,
+    requestPermission: true,
+  });
+
   const [students, setStudents] = useState<Student[]>(initialStudents ?? []);
   const [selectedId, setSelectedId] = useState<string | null>(
     initialStudents && initialStudents.length > 0 ? initialStudents[0].id : null
@@ -109,6 +119,7 @@ export function CoachPanelClient({ coachId, coachName, initialStudents }: CoachP
 
   const [tasks, setTasks] = useState<Task[]>([]);
   const [exams, setExams] = useState<Exam[]>([]);
+  const [meetings, setMeetings] = useState<Meeting[]>([]);
   const [loadingDetail, setLoadingDetail] = useState(false);
 
   const [addingStudent, setAddingStudent] = useState(false);
@@ -202,8 +213,9 @@ export function CoachPanelClient({ coachId, coachName, initialStudents }: CoachP
     setLoadingDetail(true);
     setTasks([]);
     setExams([]);
+    setMeetings([]);
     try {
-      const [{ data: t }, { data: e }] = await Promise.all([
+      const [{ data: t }, { data: e }, { data: m }] = await Promise.all([
         supabase
           .from('tasks')
           .select('*')
@@ -214,9 +226,15 @@ export function CoachPanelClient({ coachId, coachName, initialStudents }: CoachP
           .select('*')
           .eq('student_id', studentId)
           .order('exam_date', { ascending: false }),
+        supabase
+          .from('meetings')
+          .select('id, student_id, coach_id, title, meeting_date, duration_minutes, meeting_url, notes, status, created_at, updated_at')
+          .eq('student_id', studentId)
+          .order('meeting_date', { ascending: false }),
       ]);
       setTasks((t as Task[]) ?? []);
       setExams((e as Exam[]) ?? []);
+      setMeetings((m as Meeting[]) ?? []);
     } catch (err: any) {
       toast.error('Öğrenci detayı yüklenemedi', err?.message);
     } finally {
@@ -230,6 +248,7 @@ export function CoachPanelClient({ coachId, coachName, initialStudents }: CoachP
     } else {
       setTasks([]);
       setExams([]);
+      setMeetings([]);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedId]);
@@ -1260,6 +1279,25 @@ export function CoachPanelClient({ coachId, coachName, initialStudents }: CoachP
                     </div>
                   </section>
                 </div>
+
+                {/* Görüşme Yönetimi */}
+                <MeetingCard
+                  meetings={meetings}
+                  mode="coach"
+                  studentId={selectedStudent.id}
+                  coachId={coachId}
+                  students={students.map((s) => ({
+                    ...s,
+                    role: 'student' as const,
+                    created_at: (s as any).created_at ?? new Date().toISOString(),
+                    updated_at: (s as any).updated_at ?? new Date().toISOString(),
+                    phone: (s as any).phone ?? null,
+                    target_university: (s as any).target_university ?? null,
+                    target_department: (s as any).target_department ?? null,
+                  }))}
+                  loading={loadingDetail}
+                  onMutation={() => loadStudentDetail(selectedStudent.id)}
+                />
               </>
             )}
           </main>
