@@ -115,3 +115,50 @@ export function todayDayKey(): DayKey {
   const f = DAYS.find((x) => x.idx === idx);
   return (f ?? DAYS[0]).key;
 }
+
+export type RollingDay = {
+  key: string;
+  dateIso: string;
+  dayLabel: string;
+  dayShort: string;
+  dateLabel: string;
+  fullLabel: string;
+  isToday: boolean;
+  dayIndex: number;
+};
+
+const TR_MONTHS = [
+  'Ocak', 'Şubat', 'Mart', 'Nisan', 'Mayıs', 'Haziran',
+  'Temmuz', 'Ağustos', 'Eylül', 'Ekim', 'Kasım', 'Aralık',
+];
+
+const TR_DAYS = ['Paz', 'Pzt', 'Sal', 'Çar', 'Per', 'Cum', 'Cmt'];
+
+export function buildRollingWindow(): RollingDay[] {
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const days: RollingDay[] = [];
+  const offsets = [-3, -2, -1, 0, 1, 2, 3, 4, 5, 6];
+  for (const off of offsets) {
+    const d = new Date(today);
+    d.setDate(d.getDate() + off);
+    const iso = d.toISOString().slice(0, 10);
+    const dIdx = d.getDay();
+    const isToday = off === 0;
+    days.push({
+      key: iso,
+      dateIso: iso,
+      dayLabel: TR_DAYS[dIdx] ?? '',
+      dayShort: TR_DAYS[dIdx] ?? '',
+      dateLabel: `${d.getDate()} ${TR_MONTHS[d.getMonth()]}`,
+      fullLabel: `${d.getDate()} ${TR_MONTHS[d.getMonth()]} ${TR_DAYS[dIdx]}`,
+      isToday,
+      dayIndex: dIdx,
+    });
+  }
+  return days;
+}
+
+export function isSameIsoDay(isoA: string, isoB: string): boolean {
+  return isoA.slice(0, 10) === isoB.slice(0, 10);
+}

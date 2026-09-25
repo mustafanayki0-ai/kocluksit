@@ -21,7 +21,7 @@ import {
   AlertCircle,
 } from 'lucide-react';
 import type { DailyTask } from '@/lib/types';
-import { formatDate } from '@/lib/utils';
+import { formatDate, buildRollingWindow, type RollingDay, isSameIsoDay, cn } from '@/lib/utils';
 
 interface StudentTasksProps {
   studentId: string;
@@ -49,11 +49,20 @@ export function StudentTasks({ studentId, coachId, tasks: initial, mode, loading
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [editing, setEditing] = useState<Editing>(null);
 
+  const [rollingDays] = useState<RollingDay[]>(() => buildRollingWindow());
+  const [activeDateIso, setActiveDateIso] = useState<string>(() => {
+    const days = buildRollingWindow();
+    return days.find((d) => d.isToday)?.dateIso ?? days[3].dateIso;
+  });
+
   const [creating, setCreating] = useState(false);
   const [newTask, setNewTask] = useState({
     title: '',
     description: '',
-    task_date: new Date().toISOString().slice(0, 10),
+    task_date: (() => {
+      const days = buildRollingWindow();
+      return days.find((d) => d.isToday)?.dateIso ?? days[3].dateIso;
+    })(),
   });
 
   useMemo(() => {
@@ -63,11 +72,13 @@ export function StudentTasks({ studentId, coachId, tasks: initial, mode, loading
   const isStudent = mode === 'student';
 
   const sorted = useMemo(() => {
-    return [...tasks].sort((a, b) => {
-      if (a.is_completed !== b.is_completed) return a.is_completed ? 1 : -1;
-      return a.task_date.localeCompare(b.task_date);
-    });
-  }, [tasks]);
+    return [...tasks]
+      .filter((t) => isSameIsoDay(t.task_date, activeDateIso))
+      .sort((a, b) => {
+        if (a.is_completed !== b.is_completed) return a.is_completed ? 1 : -1;
+        return a.task_date.localeCompare(b.task_date);
+      });
+  }, [tasks, activeDateIso]);
 
   const handleToggle = async (task: DailyTask) => {
     const target = !task.is_completed;
@@ -203,7 +214,7 @@ export function StudentTasks({ studentId, coachId, tasks: initial, mode, loading
             <div className="flex items-center gap-2">
               <ListTodo className="w-4.5 h-4.5 text-emerald-600" />
               <h3 className="font-display font-bold text-lg text-slate-900">
-                {isStudent ? 'Haftalık Görevlerim' : 'Öğrenci Görevleri'}
+                {isStudent ? 'Günlük Görevlerim' : 'Öğrenci Günlük Görevleri'}
               </h3>
             </div>
             <p className="text-sm text-slate-500 mt-1">
@@ -213,7 +224,14 @@ export function StudentTasks({ studentId, coachId, tasks: initial, mode, loading
           {!isStudent && (
             <Button
               size="sm"
-              onClick={() => setCreating((c) => !c)}
+              onClick={() => {
+                setCreating((c) => {
+                  if (!c) {
+                    setNewTask((nt) => ({ ...nt, task_date: activeDateIso }));
+                  }
+                  return !c;
+                });
+              }}
               type="button"
               className="gap-1.5"
             >
@@ -267,7 +285,7 @@ export function StudentTasks({ studentId, coachId, tasks: initial, mode, loading
                 size="sm"
                 type="button"
                 onClick={() =>
-                  setNewTask({ title: '', description: '', task_date: new Date().toISOString().slice(0, 10) })
+                  setNewTask({ title: '', description: '', task_date: activeDateIso })
                 }
               >
                 Temizle
@@ -280,6 +298,62 @@ export function StudentTasks({ studentId, coachId, tasks: initial, mode, loading
           </div>
         )}
 
+        <div className="flex gap-2 overflow-x-auto pb-2 -mx-1 px-1 scrollbar-thin scrollbar-thumb-slate-200">
+          {rollingDays.map((d) => {
+            const active = d.dateIso === activeDateIso;
+            const dayTasks = tasks.filter((t) => isSameIsoDay(t.task_date, d.dateIso));
+            const done = dayTasks.filter((t) => t.is_completed).length;
+            return (
+              <button
+                key={d.key}
+                type="button"
+                onClick={() => setActiveDateIso(d.dateIso)}
+                className={cn(
+                  'flex-shrink-0 min-w-[120px] px-3 py-2.5 rounded-xl text-xs font-semibold transition flex flex-col items-start gap-1 border',
+                  active
+                    ? 'bg-gradient-to-br from-emerald-500 to-sky-500 text-white border-transparent shadow-md shadow-emerald-500/20 ring-2 ring-emerald-300'
+                    : d.isToday
+                      ? 'bg-amber-50/80 text-amber-900 border-amber-300 hover:bg-amber-100/80'
+                      : 'bg-white text-slate-700 border-slate-200 hover:border-sky-300 hover:bg-slate-50'
+                )}
+              >
+                <div className="flex items-center justify-between w-full gap-2">
+                  <span className="text-sm font-extrabold leading-none">
+                    {d.dateLabel.split(' ')[0]}
+                  </span>
+                  <span
+                    className={cn(
+                      'inline-flex items-center justify-center min-w-[22px] h-[22px] px-1.5 rounded-full text-[10px] font-bold',
+                      active
+                        ? dayTasks.length > 0 && done === dayTasks.length
+                          ? 'bg-white text-emerald-700'
+                          : 'bg-white/25 text-white'
+                        : d.isToday
+                          ? dayTasks.length > 0 && done === dayTasks.length
+                            ? 'bg-emerald-500 text-white'
+                            : 'bg-amber-200 text-amber-800'
+                          : dayTasks.length > 0
+                            ? done === dayTasks.length
+                              ? 'bg-emerald-100 text-emerald-700'
+                              : 'bg-slate-200 text-slate-700'
+                            : 'bg-slate-100 text-slate-500'
+                    )}
+                  >
+                    {dayTasks.length}
+                  </span>
+                </div>
+                <div className={cn(
+                  'flex items-center justify-between w-full gap-2 text-[10px] font-bold uppercase tracking-wide leading-tight',
+                  active ? 'text-white/85' : d.isToday ? 'text-amber-700' : 'text-slate-500'
+                )}>
+                  <span>{d.dateLabel.split(' ').slice(1).join(' ')}</span>
+                  <span>{d.isToday ? '· BUGÜN ·' : d.dayLabel}</span>
+                </div>
+              </button>
+            );
+          })}
+        </div>
+
         {loading ? (
           <ListSkeleton count={5} />
         ) : sorted.length === 0 ? (
@@ -287,11 +361,13 @@ export function StudentTasks({ studentId, coachId, tasks: initial, mode, loading
             <div className="w-12 h-12 rounded-2xl bg-slate-100 flex items-center justify-center text-slate-500">
               <AlertCircle className="w-6 h-6" />
             </div>
-            <p className="font-semibold text-slate-800">Henüz görev yok</p>
+            <p className="font-semibold text-slate-800">
+              {rollingDays.find((d) => d.dateIso === activeDateIso)?.fullLabel ?? 'Seçili gün'} için henüz görev yok
+            </p>
             <p className="text-sm text-slate-500 max-w-md">
               {isStudent
                 ? 'Koçun sana bir program hazırladığında buradan göreceksin. Sabırsızlanma, başarı yakında!'
-                : 'Bu öğrenci için henüz bir görev eklenmedi. Sağ üstten yeni görev ekleyerek başlayabilirsin.'}
+                : 'Bu öğrenci için seçili günde henüz bir görev eklenmedi. Sağ üstten yeni görev ekleyerek başlayabilirsin.'}
             </p>
           </div>
         ) : (
