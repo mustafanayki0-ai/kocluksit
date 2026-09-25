@@ -50,11 +50,19 @@ type Exam = {
 function toChartData(list: Exam[]) {
   return [...list]
     .sort((a, b) => new Date(a.exam_date).getTime() - new Date(b.exam_date).getTime())
-    .map((r) => ({
-      date: new Date(r.exam_date).toLocaleDateString('tr-TR', { day: '2-digit', month: 'short' }),
-      net: Number(r.net_score ?? 0),
-      label: `${(r.net_score ?? 0).toFixed(1)} net`,
-    }));
+    .map((r) => {
+      const net = Number(r.net_score ?? 0);
+      const datePretty = new Date(r.exam_date).toLocaleDateString('tr-TR', { day: '2-digit', month: 'short' });
+      return {
+        date: datePretty,
+        net,
+        exam_name: (r as any).exam_name ?? null,
+        exam_type: r.exam_type,
+        label: (r as any).exam_name
+          ? `${(r as any).exam_name} · ${net.toFixed(1)} net`
+          : `${net.toFixed(1)} net`,
+      };
+    });
 }
 
 function formatDate(d: string) {
@@ -425,7 +433,17 @@ export function StudentPanelClient({ userId }: StudentPanelClientProps) {
                     <YAxis tick={{ fill: '#64748b', fontSize: 11 }} axisLine={false} tickLine={false} />
                     <Tooltip
                       contentStyle={{ borderRadius: 12, border: '1px solid #e2e8f0' }}
-                      labelStyle={{ fontWeight: 600 }}
+                      labelStyle={{ fontWeight: 700, color: '#0f172a', marginBottom: 4 }}
+                      formatter={(val: number, _n: string, item: any) => {
+                        const rows: Array<[string, string]> = [[`${Number(val).toFixed(2)} net`, 'TYT Net']];
+                        if (item?.payload?.exam_name) rows.unshift([item.payload.exam_name, 'Deneme']);
+                        return rows.map(([v, k]) => [v, k]);
+                      }}
+                      labelFormatter={(l: string, items: any[]) => {
+                        const p = items?.[0]?.payload;
+                        if (p?.exam_name) return p.exam_name;
+                        return `${p?.exam_type ?? 'TYT'} · ${l}`;
+                      }}
                     />
                     <Legend wrapperStyle={{ fontSize: 12 }} />
                     <Line
@@ -464,7 +482,17 @@ export function StudentPanelClient({ userId }: StudentPanelClientProps) {
                     <YAxis tick={{ fill: '#64748b', fontSize: 11 }} axisLine={false} tickLine={false} />
                     <Tooltip
                       contentStyle={{ borderRadius: 12, border: '1px solid #e2e8f0' }}
-                      labelStyle={{ fontWeight: 600 }}
+                      labelStyle={{ fontWeight: 700, color: '#0f172a', marginBottom: 4 }}
+                      formatter={(val: number, _n: string, item: any) => {
+                        const rows: Array<[string, string]> = [[`${Number(val).toFixed(2)} net`, 'AYT Net']];
+                        if (item?.payload?.exam_name) rows.unshift([item.payload.exam_name, 'Deneme']);
+                        return rows.map(([v, k]) => [v, k]);
+                      }}
+                      labelFormatter={(l: string, items: any[]) => {
+                        const p = items?.[0]?.payload;
+                        if (p?.exam_name) return p.exam_name;
+                        return `${p?.exam_type ?? 'AYT'} · ${l}`;
+                      }}
                     />
                     <Legend wrapperStyle={{ fontSize: 12 }} />
                     <Line

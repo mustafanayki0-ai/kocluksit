@@ -71,10 +71,15 @@ function toChartData(list: Exam[]) {
     .sort((a, b) => new Date(a.exam_date).getTime() - new Date(b.exam_date).getTime())
     .map((r) => {
       const net = Number((r.net_score ?? r.total_net ?? 0));
+      const datePretty = new Date(r.exam_date).toLocaleDateString('tr-TR', { day: '2-digit', month: 'short' });
       return {
-        date: new Date(r.exam_date).toLocaleDateString('tr-TR', { day: '2-digit', month: 'short' }),
+        date: datePretty,
         net,
-        label: `${net.toFixed(1)} net`,
+        exam_name: (r as any).exam_name ?? null,
+        exam_type: r.exam_type,
+        label: (r as any).exam_name
+          ? `${(r as any).exam_name} · ${net.toFixed(1)} net`
+          : `${net.toFixed(1)} net`,
       };
     });
 }
@@ -1207,7 +1212,17 @@ export function CoachPanelClient({ coachId, coachName, initialStudents }: CoachP
                                 borderRadius: 12,
                                 border: '1px solid #e2e8f0',
                               }}
-                              labelStyle={{ fontWeight: 600 }}
+                              labelStyle={{ fontWeight: 700, color: '#0f172a', marginBottom: 4 }}
+                              formatter={(val: number, _n: string, item: any) => {
+                                const rows: Array<[string, string]> = [[`${Number(val).toFixed(2)} net`, 'TYT Net']];
+                                if (item?.payload?.exam_name) rows.unshift([item.payload.exam_name, 'Deneme']);
+                                return rows.map(([v, k]) => [v, k]);
+                              }}
+                              labelFormatter={(l: string, items: any[]) => {
+                                const p = items?.[0]?.payload;
+                                if (p?.exam_name) return p.exam_name;
+                                return `${p?.exam_type ?? 'TYT'} · ${l}`;
+                              }}
                             />
                             <Legend wrapperStyle={{ fontSize: 12 }} />
                             <Line
@@ -1261,7 +1276,17 @@ export function CoachPanelClient({ coachId, coachName, initialStudents }: CoachP
                                 borderRadius: 12,
                                 border: '1px solid #e2e8f0',
                               }}
-                              labelStyle={{ fontWeight: 600 }}
+                              labelStyle={{ fontWeight: 700, color: '#0f172a', marginBottom: 4 }}
+                              formatter={(val: number, _n: string, item: any) => {
+                                const rows: Array<[string, string]> = [[`${Number(val).toFixed(2)} net`, 'AYT Net']];
+                                if (item?.payload?.exam_name) rows.unshift([item.payload.exam_name, 'Deneme']);
+                                return rows.map(([v, k]) => [v, k]);
+                              }}
+                              labelFormatter={(l: string, items: any[]) => {
+                                const p = items?.[0]?.payload;
+                                if (p?.exam_name) return p.exam_name;
+                                return `${p?.exam_type ?? 'AYT'} · ${l}`;
+                              }}
                             />
                             <Legend wrapperStyle={{ fontSize: 12 }} />
                             <Line

@@ -23,11 +23,20 @@ interface ExamLineChartProps {
 
 function prepareData(results: ExamResult[]) {
   return results
-    .map((r) => ({
-      date: new Date(r.exam_date).toLocaleDateString('tr-TR', { month: '2-digit', day: '2-digit' }),
-      net: Number((r as any).net_score ?? r.total_net ?? 0),
-      label: `${r.exam_type} - ${new Date(r.exam_date).toLocaleDateString('tr-TR', { day: 'numeric', month: 'short' })}`,
-    }))
+    .map((r) => {
+      const net = Number((r as any).net_score ?? r.total_net ?? 0);
+      const datePretty = new Date(r.exam_date).toLocaleDateString('tr-TR', { day: 'numeric', month: 'short' });
+      const label = r.exam_name
+        ? `${r.exam_name} · ${datePretty}`
+        : `${r.exam_type} - ${datePretty}`;
+      return {
+        date: new Date(r.exam_date).toLocaleDateString('tr-TR', { month: '2-digit', day: '2-digit' }),
+        net,
+        exam_name: r.exam_name ?? null,
+        exam_type: r.exam_type,
+        label,
+      };
+    })
     .sort((a, b) => {
       const sa = a.date.split('.');
       const sb = b.date.split('.');
@@ -184,8 +193,20 @@ export function ExamLineChart({ results, loading }: ExamLineChartProps) {
                         fontSize: 12,
                         padding: '10px 12px',
                       }}
-                      labelStyle={{ fontWeight: 600, color: '#0f172a', marginBottom: 4 }}
-                      formatter={(value: number) => [`${value.toFixed(2)} net`, 'Toplam Net']}
+                      labelStyle={{ fontWeight: 700, color: '#0f172a', marginBottom: 6 }}
+                      formatter={(value: number, _name: string, item: any) => {
+                        const rows: Array<[string, string]> = [[`${value.toFixed(2)} net`, 'Toplam Net']];
+                        if (item?.payload?.exam_name) {
+                          rows.unshift([item.payload.exam_name, 'Deneme']);
+                        }
+                        return rows.map(([v, k]) => [v, k]);
+                      }}
+                      labelFormatter={(label: string, items: any[]) => {
+                        if (!items?.[0]?.payload) return label;
+                        const { exam_name, exam_type } = items[0].payload;
+                        if (exam_name) return `${exam_name}`;
+                        return `${exam_type} · ${label}`;
+                      }}
                     />
                     <Line
                       type="monotone"

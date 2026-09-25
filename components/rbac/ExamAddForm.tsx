@@ -23,6 +23,7 @@ export function ExamAddForm({ studentId, onAdded, mode = 'student', coachId }: E
   const [form, setForm] = useState({
     exam_type: 'TYT' as ExamType,
     exam_date: new Date().toISOString().slice(0, 10),
+    exam_name: '',
     total_net: '',
     net_score: '',
   });
@@ -46,6 +47,7 @@ export function ExamAddForm({ studentId, onAdded, mode = 'student', coachId }: E
         student_id: studentId,
         exam_type: form.exam_type,
         exam_date: form.exam_date,
+        exam_name: form.exam_name.trim() || null,
         net_score: net,
       };
       if (mode === 'coach' && coachId) {
@@ -53,8 +55,15 @@ export function ExamAddForm({ studentId, onAdded, mode = 'student', coachId }: E
       }
       const { error } = await supabase.from('exam_results').insert(payload);
       if (error) throw error;
-      toast.success('Deneme sonucu kaydedildi', `${form.exam_type} · ${net.toFixed(2)} net`);
-      setForm({ exam_type: 'TYT', exam_date: new Date().toISOString().slice(0, 10), total_net: '', net_score: '' });
+      const subtitle = `${form.exam_type}${form.exam_name ? ` · ${form.exam_name}` : ''} · ${net.toFixed(2)} net`;
+      toast.success('Deneme sonucu kaydedildi', subtitle);
+      setForm({
+        exam_type: 'TYT',
+        exam_date: new Date().toISOString().slice(0, 10),
+        exam_name: '',
+        total_net: '',
+        net_score: '',
+      });
       await onAdded();
     } catch (err: any) {
       toast.error('Deneme eklenemedi', err?.message);
@@ -86,7 +95,7 @@ export function ExamAddForm({ studentId, onAdded, mode = 'student', coachId }: E
         </div>
       </CardHeader>
       <CardBody>
-        <form onSubmit={submit} className="grid sm:grid-cols-4 gap-3 items-end">
+        <form onSubmit={submit} className="grid sm:grid-cols-2 lg:grid-cols-5 gap-3 items-end">
           <label className="block">
             <span className="text-xs font-semibold text-slate-600">Sınav Türü</span>
             <select
@@ -107,25 +116,41 @@ export function ExamAddForm({ studentId, onAdded, mode = 'student', coachId }: E
               className="input mt-1.5"
             />
           </label>
-          <label className="block">
-            <span className="text-xs font-semibold text-slate-600">Toplam Net (Maks. {maxNet})</span>
+          <label className="block lg:col-span-2">
+            <span className="text-xs font-semibold text-slate-600">
+              Deneme Adı / Yayını
+              <span className="text-slate-400 font-normal ml-1">(Opsiyonel)</span>
+            </span>
             <input
-              type="number"
-              inputMode="decimal"
-              min={0}
-              max={maxNet}
-              step={0.01}
-              value={form.net_score || form.total_net}
-              onChange={(e) => setForm((f) => ({ ...f, net_score: e.target.value, total_net: e.target.value }))}
-              placeholder={`örn. ${maxNet - 20}`}
+              type="text"
+              value={form.exam_name}
+              onChange={(e) => setForm((f) => ({ ...f, exam_name: e.target.value }))}
+              placeholder="Örn: Özdebir TYT 12, 3D Yayınları AYT 5"
               className="input mt-1.5"
-              name="net_score"
+              maxLength={120}
             />
           </label>
-          <Button type="submit" loading={submitting} size="md" className="sm:h-[42px] gap-1.5 w-full">
-            <PlusCircle className="w-4 h-4" />
-            Kaydet
-          </Button>
+          <div className="grid grid-cols-2 gap-3 lg:grid-cols-1 lg:flex lg:items-end lg:gap-3">
+            <label className="block flex-1">
+              <span className="text-xs font-semibold text-slate-600">Net (Maks. {maxNet})</span>
+              <input
+                type="number"
+                inputMode="decimal"
+                min={0}
+                max={maxNet}
+                step={0.01}
+                value={form.net_score || form.total_net}
+                onChange={(e) => setForm((f) => ({ ...f, net_score: e.target.value, total_net: e.target.value }))}
+                placeholder={`örn. ${maxNet - 20}`}
+                className="input mt-1.5"
+                name="net_score"
+              />
+            </label>
+            <Button type="submit" loading={submitting} size="md" className="sm:h-[42px] gap-1.5 w-full">
+              <PlusCircle className="w-4 h-4" />
+              Kaydet
+            </Button>
+          </div>
         </form>
       </CardBody>
     </Card>

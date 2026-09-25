@@ -31,15 +31,20 @@ function prepareChartData(results: ExamResult[]): ExamChartData[] {
     )
     .map((r) => {
       const net = Number(r.net_score ?? r.total_net ?? 0);
+      const datePretty = new Date(r.exam_date).toLocaleDateString('tr-TR', {
+        day: '2-digit',
+        month: 'short',
+      });
       return {
-        date: new Date(r.exam_date).toLocaleDateString('tr-TR', {
-          day: '2-digit',
-          month: 'short',
-        }),
+        date: datePretty,
         net,
         turkish: r.turkish_net ? Number(r.turkish_net) : undefined,
         math: r.math_net ? Number(r.math_net) : undefined,
-        label: `${net.toFixed(1)} net`,
+        exam_name: r.exam_name ?? undefined,
+        exam_type: r.exam_type,
+        label: r.exam_name
+          ? `${r.exam_name} · ${net.toFixed(1)} net`
+          : `${net.toFixed(1)} net`,
       };
     });
 }
@@ -243,9 +248,23 @@ export function ExamChart({ type, results, targetNet }: ExamChartProps) {
                   boxShadow: '0 10px 30px -10px rgba(0,0,0,0.12)',
                   fontSize: 13,
                 }}
-                labelStyle={{ color: '#64748b', marginBottom: 4 }}
+                labelStyle={{ fontWeight: 700, color: '#0f172a', marginBottom: 6 }}
                 cursor={{ stroke: color, strokeOpacity: 0.3, strokeWidth: 1 }}
-                formatter={(val: number) => [`${val.toFixed(1)} net`, 'Toplam']}
+                formatter={(val: number, name: string, item: any) => {
+                  const display: Array<[string, string]> = [];
+                  if (item?.payload?.exam_name) {
+                    display.unshift([item.payload.exam_name, 'Deneme']);
+                  }
+                  const suffix = name === 'Toplam Net' || name === 'Toplam' ? ' net' : '';
+                  display.push([`${Number(val).toFixed(1)}${suffix}`, String(name)]);
+                  return display.map(([v, k]) => [v, k]);
+                }}
+                labelFormatter={(label: string, items: any[]) => {
+                  if (!items?.[0]?.payload) return label;
+                  const { exam_name, exam_type } = items[0].payload;
+                  if (exam_name) return exam_name;
+                  return `${exam_type ?? ''} · ${label}`.trim();
+                }}
               />
               <Legend
                 wrapperStyle={{ fontSize: 12, color: '#64748b' }}

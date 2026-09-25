@@ -4,6 +4,7 @@ import { useMemo, useState, useEffect } from 'react';
 import { Card, CardBody, CardHeader } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { Badge } from '@/components/ui/Badge';
+import { Modal } from '@/components/ui/Modal';
 import { Skeleton, ListSkeleton } from '@/components/ui/Skeleton';
 import { useToast } from '@/components/ui/Toast';
 import { createClient } from '@/lib/supabase/client';
@@ -141,6 +142,7 @@ export function MeetingCard({
   const [editingId, setEditingId] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [modalOpen, setModalOpen] = useState(false);
 
   const emptyStudent = students[0]?.id ?? studentId ?? '';
   const [form, setForm] = useState({
@@ -179,18 +181,21 @@ export function MeetingCard({
     }
     setCreating(true);
     setEditingId(null);
+    setModalOpen(true);
   };
 
   const openEdit = (m: Meeting) => {
     resetForm(m);
     setEditingId(m.id);
     setCreating(false);
+    setModalOpen(true);
   };
 
   const closeForm = () => {
     setCreating(false);
     setEditingId(null);
     setSaving(false);
+    setModalOpen(false);
   };
 
   const save = async (e: React.FormEvent) => {
@@ -379,7 +384,6 @@ export function MeetingCard({
   };
 
   const renderMeetItem = (m: MeetingWithRelative, { faded = false }: { faded?: boolean }) => {
-    const editing = editingId === m.id;
     const mins = m.minutesUntil;
     const isVerySoon = mins >= 0 && mins <= 120;
     return (
@@ -392,10 +396,7 @@ export function MeetingCard({
             : 'border-slate-200 bg-white hover:border-slate-300 hover:shadow-sm'
         )}
       >
-        {editing ? (
-          renderForm()
-        ) : (
-          <div className="space-y-3">
+        <div className="space-y-3">
             <div className="flex items-start justify-between gap-3 flex-wrap">
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2 flex-wrap mb-1">
@@ -506,12 +507,12 @@ export function MeetingCard({
               )}
             </div>
           </div>
-        )}
       </li>
     );
   };
 
   return (
+    <>
     <Card className="relative overflow-hidden bg-gradient-to-br from-white to-slate-50">
       <div className="absolute -top-24 -right-24 w-80 h-80 rounded-full bg-orange-500/15 blur-3xl" />
       <CardHeader>
@@ -548,11 +549,9 @@ export function MeetingCard({
         </div>
       </CardHeader>
       <CardBody className="space-y-5">
-        {(creating && !editingId) && renderForm()}
-
         {loading ? (
           <ListSkeleton count={3} />
-        ) : upcoming.length === 0 && past.length === 0 && !creating ? (
+        ) : upcoming.length === 0 && past.length === 0 ? (
           <div className="rounded-xl border border-dashed border-slate-300 bg-slate-50/80 p-6 flex flex-col sm:flex-row items-center gap-4">
             <div className="w-12 h-12 rounded-2xl bg-slate-100 flex items-center justify-center text-slate-500 flex-shrink-0">
               <AlertCircle className="w-6 h-6" />
@@ -602,5 +601,18 @@ export function MeetingCard({
         )}
       </CardBody>
     </Card>
+
+    <Modal
+      open={modalOpen}
+      onClose={closeForm}
+      title={editingId ? 'Görüşmeyi Düzenle' : 'Yeni Görüşme Planla'}
+      description="Görüşme detaylarını doldurup kaydet. Tarih ve saat yerel saat dilimindedir, veritabanına UTC ISO formatında kaydedilir."
+      size="lg"
+    >
+      <div className="[&_form]:!rounded-xl [&_form]:!border-0 [&_form]:!p-0 [&_form]:!shadow-none">
+        {renderForm()}
+      </div>
+    </Modal>
+    </>
   );
 }

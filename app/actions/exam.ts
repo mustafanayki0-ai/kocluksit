@@ -8,6 +8,7 @@ export async function addExamResult(formData: FormData) {
   const studentId = String(formData.get('student_id') ?? '').trim();
   const examType = String(formData.get('exam_type') ?? '').trim() as 'TYT' | 'AYT';
   const examDate = String(formData.get('exam_date') ?? '').trim() || new Date().toISOString().slice(0, 10);
+  const examName = String(formData.get('exam_name') ?? '').trim() || null;
   const netRaw = String(formData.get('net_score') ?? '').trim();
 
   if (!examType || !['TYT', 'AYT'].includes(examType)) return { ok: false, error: 'Sınav türü geçersiz' };
@@ -44,6 +45,7 @@ export async function addExamResult(formData: FormData) {
       student_id: targetStudentId,
       exam_type: examType,
       exam_date: examDate,
+      exam_name: examName,
       net_score: net,
     };
 

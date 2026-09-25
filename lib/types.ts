@@ -54,6 +54,7 @@ export interface ExamResult {
   coach_id?: string | null;
   exam_type: ExamType;
   exam_date: string;
+  exam_name?: string | null;
   net_score: number;
   total_net?: number;
   turkish_net?: number | null;
@@ -96,4 +97,8 @@ export interface ExamChartData {
   date: string;
   net: number;
   label?: string;
+  exam_name?: string | null;
+  exam_type?: ExamType;
+  turkish?: number;
+  math?: number;
 }
