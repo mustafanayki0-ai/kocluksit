@@ -58,18 +58,22 @@ type Exam = {
   id: string;
   exam_type: 'TYT' | 'AYT';
   exam_date: string;
-  net_score: number;
+  net_score?: number | null;
+  total_net?: number | null;
   student_id: string;
 };
 
 function toChartData(list: Exam[]) {
   return [...list]
     .sort((a, b) => new Date(a.exam_date).getTime() - new Date(b.exam_date).getTime())
-    .map((r) => ({
-      date: new Date(r.exam_date).toLocaleDateString('tr-TR', { day: '2-digit', month: 'short' }),
-      net: Number(r.net_score ?? 0),
-      label: `${(r.net_score ?? 0).toFixed(1)} net`,
-    }));
+    .map((r) => {
+      const net = Number((r.net_score ?? r.total_net ?? 0));
+      return {
+        date: new Date(r.exam_date).toLocaleDateString('tr-TR', { day: '2-digit', month: 'short' }),
+        net,
+        label: `${net.toFixed(1)} net`,
+      };
+    });
 }
 
 function formatDate(d: string) {
@@ -196,6 +200,8 @@ export function CoachPanelClient({ coachId, coachName, initialStudents }: CoachP
 
   async function loadStudentDetail(studentId: string) {
     setLoadingDetail(true);
+    setTasks([]);
+    setExams([]);
     try {
       const [{ data: t }, { data: e }] = await Promise.all([
         supabase

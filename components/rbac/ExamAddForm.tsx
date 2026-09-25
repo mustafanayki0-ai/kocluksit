@@ -13,9 +13,10 @@ interface ExamAddFormProps {
   studentId: string;
   onAdded: () => Promise<void>;
   mode?: 'student' | 'coach';
+  coachId?: string;
 }
 
-export function ExamAddForm({ studentId, onAdded, mode = 'student' }: ExamAddFormProps) {
+export function ExamAddForm({ studentId, onAdded, mode = 'student', coachId }: ExamAddFormProps) {
   const supabase = createClient();
   const toast = useToast();
   const [submitting, setSubmitting] = useState(false);
@@ -41,12 +42,16 @@ export function ExamAddForm({ studentId, onAdded, mode = 'student' }: ExamAddFor
     }
     setSubmitting(true);
     try {
-      const { error } = await supabase.from('exam_results').insert({
+      const payload: Record<string, any> = {
         student_id: studentId,
         exam_type: form.exam_type,
         exam_date: form.exam_date,
         net_score: net,
-      });
+      };
+      if (mode === 'coach' && coachId) {
+        payload.coach_id = coachId;
+      }
+      const { error } = await supabase.from('exam_results').insert(payload);
       if (error) throw error;
       toast.success('Deneme sonucu kaydedildi', `${form.exam_type} · ${net.toFixed(2)} net`);
       setForm({ exam_type: 'TYT', exam_date: new Date().toISOString().slice(0, 10), total_net: '', net_score: '' });

@@ -460,7 +460,7 @@ export function CoachDashboardClient({
                   </CardHeader>
                 </Card>
 
-                <ExamAddForm studentId={selected.id} onAdded={() => loadStudentData(selected.id)} mode="coach" />
+                <ExamAddForm studentId={selected.id} onAdded={() => loadStudentData(selected.id)} mode="coach" coachId={coachId} />
 
                 <div className="grid lg:grid-cols-5 gap-5 items-start">
                   <div className="lg:col-span-3 space-y-5">
